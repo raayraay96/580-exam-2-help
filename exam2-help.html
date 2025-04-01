@@ -1,0 +1,2083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimization Study Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .draggable-handle {
+            cursor: grab;
+            touch-action: none;
+            user-select: none;
+        }
+        .draggable-handle:active {
+            cursor: grabbing;
+        }
+        .constraint-line {
+            stroke-width: 2;
+            stroke-dasharray: 5,5;
+        }
+        .objective-line {
+            stroke-width: 3;
+            stroke-dasharray: 10,5;
+        }
+        .feasible-region {
+            fill: rgba(110, 231, 183, 0.3);
+            stroke: rgba(110, 231, 183, 0.8);
+            stroke-width: 1;
+        }
+        .simplex-cell {
+            min-width: 60px;
+            min-height: 40px;
+            border: 1px solid #d1d5db;
+        }
+        .simplex-pivot {
+            background-color: rgba(251, 146, 60, 0.3);
+        }
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        .animate-pulse-glow {
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="flex flex-col min-h-screen">
+        <!-- Header -->
+        <header class="bg-emerald-600 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-bold">Optimization Study Game</h1>
+                        <p class="text-emerald-100">Interactive learning for Chapters 15-17</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div id="score-display" class="bg-emerald-700 px-4 py-2 rounded-full font-bold flex items-center">
+                            <i class="fas fa-star mr-2 text-yellow-300"></i>
+                            <span>Score: <span id="score">0</span></span>
+                        </div>
+                        <button id="help-btn" class="bg-emerald-700 hover:bg-emerald-800 px-4 py-2 rounded-full">
+                            <i class="fas fa-question-circle"></i> Help
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-grow container mx-auto px-4 py-6 flex flex-col lg:flex-row gap-6">
+            <!-- Sidebar Navigation -->
+            <aside class="sidebar lg:w-1/4 bg-white rounded-xl shadow-md p-6 h-fit lg:sticky lg:top-6">
+                <h2 class="text-xl font-bold mb-4 text-emerald-800 border-b pb-2">Study Modules</h2>
+                <ul class="space-y-2">
+                    <li>
+                        <button id="graphical-method-btn" class="module-btn w-full text-left px-4 py-3 rounded-lg bg-emerald-100 hover:bg-emerald-200 font-medium transition-all flex items-center justify-between">
+                            <span>Graphical Method</span>
+                            <i class="fas fa-chart-line"></i>
+                        </button>
+                    </li>
+                    <li>
+                        <button id="simplex-method-btn" class="module-btn w-full text-left px-4 py-3 rounded-lg bg-gray-100 hover:bg-gray-200 font-medium transition-all flex items-center justify-between">
+                            <span>Simplex Method</span>
+                            <i class="fas fa-table"></i>
+                        </button>
+                    </li>
+                    <li>
+                        <button id="duality-btn" class="module-btn w-full text-left px-4 py-3 rounded-lg bg-gray-100 hover:bg-gray-200 font-medium transition-all flex items-center justify-between">
+                            <span>Duality</span>
+                            <i class="fas fa-code-branch"></i>
+                        </button>
+                    </li>
+                    <li>
+                        <button id="quiz-btn" class="module-btn w-full text-left px-4 py-3 rounded-lg bg-gray-100 hover:bg-gray-200 font-medium transition-all flex items-center justify-between animate-pulse-glow">
+                            <span>Practice Quiz</span>
+                            <i class="fas fa-question"></i>
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="mt-8 pt-4 border-t border-gray-200">
+                    <h3 class="font-bold mb-3 text-emerald-800">Your Progress</h3>
+                    <div class="space-y-2">
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span>Graphical Method</span>
+                                <span class="text-sm text-gray-500" id="graphical-progress">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div id="graphical-bar" class="bg-emerald-600 h-2.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span>Simplex Method</span>
+                                <span class="text-sm text-gray-500" id="simplex-progress">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div id="simplex-bar" class="bg-emerald-600 h-2.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span>Duality</span>
+                                <span class="text-sm text-gray-500" id="duality-progress">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div id="duality-bar" class="bg-emerald-600 h-2.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <div class="lg:w-3/4 bg-white rounded-xl shadow-md p-6">
+                <!-- Graphical Method Module -->
+                <div id="graphical-method" class="module-content">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-emerald-800">Graphical Method Visualization</h2>
+                        <div class="flex space-x-2">
+                            <button id="graphical-hint" class="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm flex items-center">
+                                <i class="fas fa-lightbulb mr-1"></i> Hint
+                            </button>
+                            <button id="graphical-reset" class="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm flex items-center">
+                                <i class="fas fa-redo mr-1"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2">
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                <canvas id="graphical-chart" width="500" height="400"></canvas>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full">
+                                <h3 class="font-bold mb-3 text-emerald-700">Problem Setup</h3>
+                                
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium mb-1">Objective</label>
+                                    <div class="flex items-center">
+                                        <select id="objective-type" class="mr-2 p-2 border rounded">
+                                            <option value="max">Maximize</option>
+                                            <option value="min">Minimize</option>
+                                        </select>
+                                        <input id="obj-x1" type="number" value="3" class="w-16 p-2 border rounded text-right">
+                                        <span class="mx-1">x₁ +</span>
+                                        <input id="obj-x2" type="number" value="5" class="w-16 p-2 border rounded text-right">
+                                        <span class="ml-1">x₂</span>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium mb-1">Constraints</label>
+                                    <div id="constraints-container" class="space-y-2">
+                                        <!-- Constraints will be added here -->
+                                    </div>
+                                    <button id="add-constraint" class="mt-2 text-sm text-emerald-600 hover:text-emerald-800 flex items-center">
+                                        <i class="fas fa-plus mr-1"></i> Add Constraint
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <h3 class="font-bold mb-3 text-emerald-700">Learning Objectives</h3>
+                        <ul class="list-disc pl-5 space-y-1 text-sm">
+                            <li>Understand how to represent constraints graphically</li>
+                            <li>Identify the feasible region and its corner points</li>
+                            <li>Visualize how the objective function moves to find the optimal solution</li>
+                            <li>Recognize cases of unbounded, infeasible, and multiple optimal solutions</li>
+                        </ul>
+
+                        <div id="graphical-feedback" class="mt-4 p-3 rounded-lg hidden">
+                            <!-- Feedback will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simplex Method Module -->
+                <div id="simplex-method" class="module-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-emerald-800">Simplex Method Interactive Tableau</h2>
+                        <div class="flex space-x-2">
+                            <button id="simplex-hint" class="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm flex items-center">
+                                <i class="fas fa-lightbulb mr-1"></i> Hint
+                            </button>
+                            <button id="simplex-reset" class="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm flex items-center">
+                                <i class="fas fa-redo mr-1"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2">
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 overflow-x-auto">
+                                <table id="simplex-tableau" class="w-full text-sm">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-2 py-2">Basic</th>
+                                            <th class="px-2 py-2">x₁</th>
+                                            <th class="px-2 py-2">x₂</th>
+                                            <th class="px-2 py-2">s₁</th>
+                                            <th class="px-2 py-2">s₂</th>
+                                            <th class="px-2 py-2">s₃</th>
+                                            <th class="px-2 py-2">Solution</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Tableau rows will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="mt-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                <h3 class="font-bold mb-2 text-emerald-700">Current Step</h3>
+                                <div id="simplex-step" class="mb-2 text-sm">
+                                    <div>1. Initial feasible solution found.</div>
+                                    <div>2. Select entering variable (most negative coefficient in objective row).</div>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-4 mt-3">
+                                    <div>
+                                        <h4 class="font-medium text-sm mb-1">Entering Variable</h4>
+                                        <select id="entering-var" class="w-full p-2 border rounded text-sm">
+                                            <option value="">Select...</option>
+                                            <option value="x1">x₁</option>
+                                            <option value="x2">x₂</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium text-sm mb-1">Leaving Variable</h4>
+                                        <select id="leaving-var" class="w-full p-2 border rounded text-sm">
+                                            <option value="">Select...</option>
+                                            <option value="s1">s₁</option>
+                                            <option value="s2">s₂</option>
+                                            <option value="s3">s₃</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <button id="perform-pivot" class="mt-3 w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg">
+                                    Perform Pivot Operation
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full">
+                                <h3 class="font-bold mb-3 text-emerald-700">Problem Statement</h3>
+                                <div class="text-sm mb-4">
+                                    <p class="font-medium">Maximize: Z = 3x₁ + 5x₂</p>
+                                    <p>Subject to:</p>
+                                    <ul class="list-disc pl-5 space-y-1 mt-1">
+                                        <li>x₁ + s₁ = 4</li>
+                                        <li>2x₂ + s₂ = 12</li>
+                                        <li>3x₁ + 2x₂ + s₃ = 18</li>
+                                        <li>x₁, x₂, s₁, s₂, s₃ ≥ 0</li>
+                                    </ul>
+                                </div>
+
+                                <div class="mt-4">
+                                    <h3 class="font-bold mb-2 text-emerald-700">Simplex Steps</h3>
+                                    <div class="text-xs bg-white p-2 rounded border border-gray-200 h-48 overflow-y-auto">
+                                        <ol id="simplex-history" class="list-decimal pl-5 space-y-1">
+                                            <li>Initial tableau created</li>
+                                        </ol>
+                                    </div>
+                                </div>
+
+                                <div id="simplex-feedback" class="mt-4 p-3 rounded-lg hidden">
+                                    <!-- Feedback will be displayed here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Duality Module -->
+                <div id="duality" class="module-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-emerald-800">Duality Concepts Explorer</h2>
+                        <div class="flex space-x-2">
+                            <button id="duality-hint" class="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm flex items-center">
+                                <i class="fas fa-lightbulb mr-1"></i> Hint
+                            </button>
+                            <button id="duality-reset" class="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm flex items-center">
+                                <i class="fas fa-redo mr-1"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2">
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                    <div>
+                                        <h3 class="font-bold text-emerald-700 mb-2">Primal Problem</h3>
+                                        <div class="text-sm space-y-2">
+                                            <div>
+                                                <label class="block text-xs font-medium mb-1">Objective</label>
+                                                <div class="flex items-center">
+                                                    <select id="primal-objective" class="mr-2 p-1 border rounded text-xs">
+                                                        <option value="max">Maximize</option>
+                                                        <option value="min">Minimize</option>
+                                                    </select>
+                                                    <input id="primal-obj-z" type="text" value="Z" class="w-8 p-1 border rounded text-center font-bold" disabled>
+                                                    <span class="mx-1">=</span>
+                                                    <input id="primal-c1" type="number" value="4" class="w-10 p-1 border rounded text-right">
+                                                    <span class="mx-1">x₁ +</span>
+                                                    <input id="primal-c2" type="number" value="6" class="w-10 p-1 border rounded text-right">
+                                                    <span class="ml-1">x₂</span>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label class="block text-xs font-medium mb-1">Constraints</label>
+                                                <div id="primal-constraints" class="space-y-2">
+                                                    <div class="flex items-center">
+                                                        <input id="primal-a11" type="number" value="1" class="w-8 p-1 border rounded text-right">
+                                                        <span class="mx-1">x₁ +</span>
+                                                        <input id="primal-a12" type="number" value="1" class="w-8 p-1 border rounded text-right">
+                                                        <span class="mx-1">x₂</span>
+                                                        <select class="ml-1 p-1 border rounded text-xs w-12">
+                                                            <option value="≤">≤</option>
+                                                            <option value="≥">≥</option>
+                                                            <option value="=">=</option>
+                                                        </select>
+                                                        <input id="primal-b1" type="number" value="8" class="w-10 p-1 border rounded text-right ml-1">
+                                                    </div>
+                                                    <div class="flex items-center">
+                                                        <input id="primal-a21" type="number" value="1" class="w-8 p-1 border rounded text-right">
+                                                        <span class="mx-1">x₁ +</span>
+                                                        <input id="primal-a22" type="number" value="3" class="w-8 p-1 border rounded text-right">
+                                                        <span class="mx-1">x₂</span>
+                                                        <select class="ml-1 p-1 border rounded text-xs w-12">
+                                                            <option value="≤">≤</option>
+                                                            <option value="≥">≥</option>
+                                                            <option value="=">=</option>
+                                                        </select>
+                                                        <input id="primal-b2" type="number" value="12" class="w-10 p-1 border rounded text-right ml-1">
+                                                    </div>
+                                                </div>
+                                                <button id="add-primal-constraint" class="mt-2 text-xs text-emerald-600 hover:text-emerald-800 flex items-center">
+                                                    <i class="fas fa-plus mr-1"></i> Add Constraint
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-emerald-700 mb-2">Dual Problem (Auto-generated)</h3>
+                                        <div id="dual-problem" class="text-sm bg-emerald-50 p-3 rounded border border-emerald-200">
+                                            <p>Minimize <span class="font-bold">W</span> = <span id="dual-obj">8y₁ + 12y₂</span></p>
+                                            <p>Subject to:</p>
+                                            <ul id="dual-constraints" class="list-disc pl-5">
+                                                <li>y₁ + y₂ ≥ 4</li>
+                                                <li>y₁ + 3y₂ ≥ 6</li>
+                                            </ul>
+                                            <p class="mt-1"><span class="font-medium">y₁, y₂ ≥ 0</span></p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <h3 class="font-bold text-emerald-700 mb-2">Duality Concepts</h3>
+                                    <div class="text-sm space-y-2">
+                                        <div class="bg-white p-2 rounded border border-gray-200">
+                                            <p class="font-medium">Weak Duality Theorem</p>
+                                            <p class="text-xs">For any feasible solutions x (primal) and y (dual), the primal objective value ≤ the dual objective value (for max primal).</p>
+                                        </div>
+                                        <div class="bg-white p-2 rounded border border-gray-200">
+                                            <p class="font-medium">Strong Duality Theorem</p>
+                                            <p class="text-xs">If either problem has a finite optimal solution, then so does the other, and their optimal objective values are equal.</p>
+                                        </div>
+                                        <div class="bg-white p-2 rounded border border-gray-200">
+                                            <p class="font-medium">Complementary Slackness</p>
+                                            <p class="text-xs">At optimality, if a primal constraint is not tight, the corresponding dual variable is zero, and vice versa.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full">
+                                <h3 class="font-bold mb-3 text-emerald-700">Interactive Duality</h3>
+                                <div class="text-sm mb-4">
+                                    <p>Modify the primal problem parameters and observe how the dual problem changes automatically.</p>
+                                </div>
+
+                                <div class="mt-4">
+                                    <h4 class="font-medium mb-2">Solutions Comparison</h4>
+                                    <div class="text-xs">
+                                        <div class="grid grid-cols-5 gap-1 text-center">
+                                            <div class="font-bold bg-emerald-100 p-1">Problem</div>
+                                            <div class="font-bold bg-emerald-100 p-1">x₁/y₁</div>
+                                            <div class="font-bold bg-emerald-100 p-1">x₂/y₂</div>
+                                            <div class="font-bold bg-emerald-100 p-1">Slack</div>
+                                            <div class="font-bold bg-emerald-100 p-1">Objective</div>
+                                            
+                                            <div class="font-medium bg-gray-100 p-1">Primal</div>
+                                            <div><input type="number" class="w-full p-1 border rounded" id="primal-sol-x1" value="3"></div>
+                                            <div><input type="number" class="w-full p-1 border rounded" id="primal-sol-x2" value="5"></div>
+                                            <div><input type="number" class="w-full p-1 border rounded" id="primal-slack" value="0"></div>
+                                            <div><input type="number" class="w-full p-1 border rounded font-bold" id="primal-obj-val" value="42" disabled></div>
+                                            
+                                            <div class="font-medium bg-gray-100 p-1">Dual</div>
+                                            <div><input type="number" class="w-full p-1 border rounded" id="dual-sol-y1" value="3"></div>
+                                            <div><input type="number" class="w-full p-1 border rounded" id="dual-sol-y2" value="1"></div>
+                                            <div><input type="number" class="w-full p-1 border rounded" id="dual-surplus" value="0"></div>
+                                            <div><input type="number" class="w-full p-1 border rounded font-bold" id="dual-obj-val" value="42" disabled></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button id="check-duality" class="mt-4 w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm">
+                                    Check Duality Theorems
+                                </button>
+
+                                <div id="duality-feedback" class="mt-4 p-3 rounded-lg hidden">
+                                    <!-- Feedback will be displayed here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz Module -->
+                <div id="quiz" class="module-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-emerald-800">Practice Quiz</h2>
+                        <div class="flex space-x-2">
+                            <button id="quiz-restart" class="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm flex items-center">
+                                <i class="fas fa-redo mr-1"></i> Restart
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                        <div id="quiz-question" class="mb-6">
+                            <h3 class="font-bold text-lg mb-4" id="question-text">1. In linear programming, the fundamental theorem states that if an optimal solution exists, then:</h3>
+                            <div class="space-y-2">
+                                <div class="flex items-center">
+                                    <input type="radio" id="option1" name="quiz" value="A" class="mr-2">
+                                    <label for="option1" id="option1-text">A. There is always exactly one optimal solution at a vertex</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="radio" id="option2" name="quiz" value="B" class="mr-2">
+                                    <label for="option2" id="option2-text">B. An optimal solution will occur at at least one basic feasible solution</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="radio" id="option3" name="quiz" value="C" class="mr-2">
+                                    <label for="option3" id="option3-text">C. The optimal solution must satisfy all constraints with equality</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="radio" id="option4" name="quiz" value="D" class="mr-2">
+                                    <label for="option4" id="option4-text">D. The feasible region must be bounded</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center">
+                            <div class="text-sm">
+                                Question <span id="current-question">1</span> of <span id="total-questions">5</span>
+                            </div>
+                            <button id="submit-quiz" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg">
+                                Submit Answer
+                            </button>
+                        </div>
+
+                        <div id="quiz-feedback" class="mt-6 hidden">
+                            <div id="feedback-correct" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative hidden">
+                                <strong class="font-bold">Correct!</strong>
+                                <span class="block sm:inline" id="correct-explanation">Your answer is right.</span>
+                            </div>
+                            <div id="feedback-incorrect" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative hidden">
+                                <strong class="font-bold">Incorrect!</strong>
+                                <span class="block sm:inline" id="incorrect-explanation">Please review the concept.</span>
+                            </div>
+
+                            <button id="next-question" class="mt-4 w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg">
+                                Next Question
+                            </button>
+                        </div>
+
+                        <div id="quiz-results" class="mt-6 hidden">
+                            <h3 class="font-bold text-lg mb-4 text-center">Quiz Results</h3>
+                            <div class="bg-white p-4 rounded-lg border border-gray-200">
+                                <div class="text-center mb-4">
+                                    <div class="text-4xl font-bold text-emerald-600 mb-2" id="score-percentage">80%</div>
+                                    <div class="text-lg" id="score-message">Great job!</div>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between">
+                                        <span>Total Questions:</span>
+                                        <span id="result-total">5</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Correct Answers:</span>
+                                        <span id="result-correct">4</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Incorrect Answers:</span>
+                                        <span id="result-incorrect">1</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 grid grid-cols-2 gap-2">
+                                <button id="review-quiz" class="py-2 bg-gray-200 hover:bg-gray-300 rounded-lg">
+                                    Review Answers
+                                </button>
+                                <button id="new-quiz" class="py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg">
+                                    New Quiz
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Help Modal -->
+        <div id="help-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold text-emerald-800">Game Help & Instructions</h3>
+                        <button id="close-help" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-4 text-sm">
+                        <div>
+                            <h4 class="font-bold text-emerald-700 mb-1">How to Use This Study Game</h4>
+                            <p>This interactive game helps you learn optimization concepts through three modules: Graphical Method, Simplex Method, and Duality. Complete activities in each module to earn points and track your progress.</p>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-bold text-emerald-700 mb-1">Module Overview</h4>
+                            <ul class="list-disc pl-5 space-y-1">
+                                <li><strong>Graphical Method:</strong> Visualize and solve 2D linear programs by manipulating constraints and objective functions.</li>
+                                <li><strong>Simplex Method:</strong> Work through the tableau step-by-step, selecting entering and leaving variables.</li>
+                                <li><strong>Duality:</strong> Explore the relationship between primal and dual problems.</li>
+                                <li><strong>Practice Quiz:</strong> Test your understanding with interactive questions.</li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-bold text-emerald-700 mb-1">Scoring System</h4>
+                            <ul class="list-disc pl-5 space-y-1">
+                                <li>Complete activities in each module to earn points</li>
+                                <li>Answer quiz questions correctly for bonus points</li>
+                                <li>Your progress in each topic is tracked in the sidebar</li>
+                                <li>Earn achievements for completing modules and reaching score milestones</li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-bold text-emerald-700 mb-1">Optimization Concepts Covered</h4>
+                            <ul class="list-disc pl-5 space-y-1">
+                                <li>Linear programming fundamentals</li>
+                                <li>Feasible regions and basic feasible solutions</li>
+                                <li>Simplex algorithm steps</li>
+                                <li>Duality theory and complementary slackness</li>
+                                <li>Standard form conversion</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-emerald-50 p-3 rounded border border-emerald-200">
+                            <h4 class="font-bold text-emerald-700 mb-1">Tips for Success</h4>
+                            <ul class="list-disc pl-5 space-y-1">
+                                <li>Work through the modules in order (Graphical → Simplex → Duality)</li>
+                                <li>Take notes as you interact with each concept</li>
+                                <li>Use the hints when you're stuck</li>
+                                <li>Test yourself with the practice quiz to identify areas needing review</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize game state
+        const gameState = {
+            score: 0,
+            progress: {
+                graphical: 0,
+                simplex: 0,
+                duality: 0
+            },
+            currentModule: 'graphical-method',
+            quiz: {
+                questions: [
+                    {
+                        question: "1. In linear programming, the fundamental theorem states that if an optimal solution exists, then:",
+                        options: [
+                            "A. There is always exactly one optimal solution at a vertex",
+                            "B. An optimal solution will occur at at least one basic feasible solution",
+                            "C. The optimal solution must satisfy all constraints with equality",
+                            "D. The feasible region must be bounded"
+                        ],
+                        answer: "B",
+                        explanation: "The fundamental theorem of linear programming states that if an optimal solution exists, then it exists at a basic feasible solution (which corresponds to a vertex of the feasible region). There may be multiple optimal solutions."
+                    },
+                    {
+                        question: "2. When converting a linear program to standard form, what do we do with a '≥' inequality constraint?",
+                        options: [
+                            "A. Add a surplus variable and subtract it from the left-hand side",
+                            "B. Add a slack variable and add it to the left-hand side",
+                            "C. Reverse the inequality sign and multiply both sides by -1",
+                            "D. Split it into two '≤' constraints"
+                        ],
+                        answer: "A",
+                        explanation: "For '≥' constraints, we add a surplus variable and subtract it from the left-hand side to convert the inequality to equality. For '≤' constraints, we add a slack variable."
+                    },
+                    {
+                        question: "3. In the simplex method, the leaving variable is determined by:",
+                        options: [
+                            "A. The most negative coefficient in the objective row",
+                            "B. The smallest non-negative ratio of the RHS to the pivot column coefficient",
+                            "C. The largest coefficient in the pivot column",
+                            "D. The variable with the smallest current value"
+                        ],
+                        answer: "B",
+                        explanation: "The leaving variable is determined by the smallest non-negative ratio test (RHS divided by the corresponding positive entry in the pivot column), which ensures the next solution remains feasible."
+                    },
+                    {
+                        question: "4. According to weak duality, for a primal maximization problem and its dual:",
+                        options: [
+                            "A. The primal objective is always ≤ the dual objective at optimality",
+                            "B. The primal objective is always ≥ the dual objective at optimality",
+                            "C. Any feasible primal objective is ≤ any feasible dual objective",
+                            "D. Any feasible primal objective is ≥ any feasible dual objective"
+                        ],
+                        answer: "C",
+                        explanation: "Weak duality states that for a maximization primal problem and its dual minimization problem, any feasible primal objective value is less than or equal to any feasible dual objective value."
+                    },
+                    {
+                        question: "5. Complementary slackness at optimality implies that:",
+                        options: [
+                            "A. All constraints must be binding",
+                            "B. If a dual variable is positive, the corresponding primal constraint must be binding",
+                            "C. The primal and dual must have the same number of variables",
+                            "D. The primal and dual objective values must be equal"
+                        ],
+                        answer: "B",
+                        explanation: "Complementary slackness means that if a dual variable is positive, its corresponding primal constraint must be tight (binding), and if a primal variable is positive, its corresponding dual constraint must be tight."
+                    }
+                ],
+                currentQuestion: 0,
+                answers: [],
+                score: 0
+            }
+        };
+
+        // DOM Elements
+        const modules = {
+            graphical: document.getElementById('graphical-method'),
+            simplex: document.getElementById('simplex-method'),
+            duality: document.getElementById('duality'),
+            quiz: document.getElementById('quiz')
+        };
+
+        const moduleButtons = {
+            graphical: document.getElementById('graphical-method-btn'),
+            simplex: document.getElementById('simplex-method-btn'),
+            duality: document.getElementById('duality-btn'),
+            quiz: document.getElementById('quiz-btn')
+        };
+
+        // Initialize the game
+        document.addEventListener('DOMContentLoaded', function() {
+            updateScore();
+            updateProgressBars();
+            setupGraphicalModule();
+            setupSimplexModule();
+            setupDualityModule();
+            setupQuizModule();
+            setupEventListeners();
+            showModule('graphical-method');
+        });
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Module navigation
+            moduleButtons.graphical.addEventListener('click', () => showModule('graphical-method'));
+            moduleButtons.simplex.addEventListener('click', () => showModule('simplex-method'));
+            moduleButtons.duality.addEventListener('click', () => showModule('duality'));
+            moduleButtons.quiz.addEventListener('click', () => showModule('quiz'));
+
+            // Help modal
+            document.getElementById('help-btn').addEventListener('click', () => {
+                document.getElementById('help-modal').classList.remove('hidden');
+            });
+            document.getElementById('close-help').addEventListener('click', () => {
+                document.getElementById('help-modal').classList.add('hidden');
+            });
+        }
+
+        // Show selected module and hide others
+        function showModule(moduleId) {
+            // Highlight active button
+            Object.keys(moduleButtons).forEach(key => {
+                const button = moduleButtons[key];
+                if (`${key}-method` === moduleId || key === moduleId) {
+                    button.classList.remove('bg-gray-100');
+                    button.classList.add('bg-emerald-100', 'hover:bg-emerald-200');
+                } else {
+                    button.classList.remove('bg-emerald-100', 'hover:bg-emerald-200');
+                    button.classList.add('bg-gray-100', 'hover:bg-gray-200');
+                }
+            });
+
+            // Show active module
+            Object.values(modules).forEach(module => {
+                if (module.id === moduleId) {
+                    module.classList.remove('hidden');
+                    // Update game state
+                    gameState.currentModule = moduleId;
+                    // Start quiz if needed
+                    if (moduleId === 'quiz') {
+                        startQuiz();
+                    }
+                } else {
+                    module.classList.add('hidden');
+                }
+            });
+        }
+
+        // Update score display
+        function updateScore() {
+            document.getElementById('score').textContent = gameState.score;
+        }
+
+        // Update progress bars
+        function updateProgressBars() {
+            document.getElementById('graphical-bar').style.width = `${gameState.progress.graphical}%`;
+            document.getElementById('simplex-bar').style.width = `${gameState.progress.simplex}%`;
+            document.getElementById('duality-bar').style.width = `${gameState.progress.duality}%`;
+            
+            document.getElementById('graphical-progress').textContent = `${gameState.progress.graphical}%`;
+            document.getElementById('simplex-progress').textContent = `${gameState.progress.simplex}%`;
+            document.getElementById('duality-progress').textContent = `${gameState.progress.duality}%`;
+            
+            // Update module completion indicators
+            if (gameState.progress.graphical >= 100) {
+                moduleButtons.graphical.querySelector('i').classList.add('text-yellow-400');
+                moduleButtons.graphical.querySelector('i').classList.remove('text-gray-600');
+            }
+            if (gameState.progress.simplex >= 100) {
+                moduleButtons.simplex.querySelector('i').classList.add('text-yellow-400');
+                moduleButtons.simplex.querySelector('i').classList.remove('text-gray-600');
+            }
+            if (gameState.progress.duality >= 100) {
+                moduleButtons.duality.querySelector('i').classList.add('text-yellow-400');
+                moduleButtons.duality.querySelector('i').classList.remove('text-gray-600');
+            }
+        }
+
+        // Add points to score
+        function addPoints(points) {
+            gameState.score += points;
+            updateScore();
+            
+            // Animate score display
+            const scoreDisplay = document.getElementById('score-display');
+            scoreDisplay.classList.add('animate-pulse');
+            setTimeout(() => {
+                scoreDisplay.classList.remove('animate-pulse');
+            }, 1000);
+        }
+
+        // Update progress for a module
+        function updateModuleProgress(module, progress) {
+            gameState.progress[module] = Math.min(100, Math.max(0, progress));
+            updateProgressBars();
+            
+            if (progress >= 100) {
+                // Add points for completion
+                if (!gameState[`${module}Completed`]) {
+                    addPoints(50);
+                    gameState[`${module}Completed`] = true;
+                    
+                    // Show completion feedback
+                    const feedbackElement = document.getElementById(`${module}-feedback`);
+                    feedbackElement.innerHTML = `
+                        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                            <strong class="font-bold">Module Complete!</strong>
+                            <span class="block">+50 points. Great job completing the ${module.replace('-', ' ')} module!</span>
+                        </div>
+                    `;
+                    feedbackElement.classList.remove('hidden');
+                }
+            }
+        }
+
+        // Graphical Method Module
+        function setupGraphicalModule() {
+            // Chart setup
+            const ctx = document.getElementById('graphical-chart').getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'center',
+                            min: 0,
+                            max: 10,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            position: 'center',
+                            min: 0,
+                            max: 10,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: false
+                        }
+                    }
+                }
+            });
+
+            // Initial constraints
+            const constraints = [
+                { a1: 1, a2: 0, op: '≤', b: 4, color: 'rgba(255, 99, 132, 1)' },
+                { a1: 0, a2: 2, op: '≤', b: 12, color: 'rgba(54, 162, 235, 1)' },
+                { a1: 3, a2: 2, op: '≤', b: 18, color: 'rgba(255, 159, 64, 1)' }
+            ];
+
+            // Add constraints to UI and chart
+            const constraintsContainer = document.getElementById('constraints-container');
+            
+            function updateGraphicalModel() {
+                // Clear previous constraints from chart
+                chart.data.datasets = chart.data.datasets.filter(ds => ds.label === 'Feasible Region' || ds.label === 'Objective Function');
+                
+                // Get objective function
+                const objType = document.getElementById('objective-type').value;
+                const c1 = parseFloat(document.getElementById('obj-x1').value) || 0;
+                const c2 = parseFloat(document.getElementById('obj-x2').value) || 0;
+                
+                // Add constraints to chart
+                constraints.forEach((constraint, i) => {
+                    // Add line for the constraint equation
+                    const linePoints = [];
+                    if (constraint.a1 !== 0 && constraint.a2 !== 0) {
+                        // General case: a1x1 + a2x2 = b
+                        // Find x1=0 point
+                        const x1_0 = { x: 0, y: constraint.b / constraint.a2 };
+                        // Find x2=0 point
+                        const x2_0 = { x: constraint.b / constraint.a1, y: 0 };
+                        
+                        if (x1_0.y <= 10 || x2_0.x <= 10) {
+                            // Only add points that fit in our chart
+                            linePoints.push({ x: 0, y: Math.min(10, x1_0.y) });
+                            linePoints.push({ x: Math.min(10, x2_0.x), y: 0 });
+                        }
+                    } else if (constraint.a1 === 0) {
+                        // Vertical line: a2x2 = b
+                        linePoints.push({ x: 0, y: constraint.b / constraint.a2 });
+                        linePoints.push({ x: 10, y: constraint.b / constraint.a2 });
+                    } else if (constraint.a2 === 0) {
+                        // Horizontal line: a1x1 = b
+                        linePoints.push({ x: constraint.b / constraint.a1, y: 0 });
+                        linePoints.push({ x: constraint.b / constraint.a1, y: 10 });
+                    }
+                    
+                    chart.data.datasets.push({
+                        label: `Constraint ${i+1}`,
+                        data: linePoints,
+                        borderColor: constraint.color,
+                        backgroundColor: constraint.color,
+                        type: 'line',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                        fill: false
+                    });
+                });
+                
+                // Calculate feasible region vertices
+                const vertices = findFeasibleRegionVertices(constraints);
+                
+                // Add feasible region to chart
+                if (vertices.length > 0) {
+                    const feasiblePoints = [...vertices, vertices[0]]; // Close the polygon
+                    
+                    chart.data.datasets.push({
+                        label: 'Feasible Region',
+                        data: feasiblePoints,
+                        backgroundColor: 'rgba(110, 231, 183, 0.3)',
+                        borderColor: 'rgba(110, 231, 183, 0.8)',
+                        borderWidth: 1,
+                        pointRadius: 4,
+                        pointBackgroundColor: 'rgba(110, 231, 183, 1)',
+                        type: 'line',
+                        fill: true,
+                        showLine: true
+                    });
+                    
+                    // Add vertices points
+                    chart.data.datasets.push({
+                        label: 'Vertices',
+                        data: vertices,
+                        backgroundColor: 'rgba(110, 231, 183, 1)',
+                        borderColor: 'rgba(110, 231, 183, 1)',
+                        borderWidth: 2,
+                        pointRadius: 6,
+                        type: 'scatter'
+                    });
+                    
+                    // Calculate and plot optimal solution if objective function is defined
+                    if (c1 !== 0 || c2 !== 0) {
+                        console.log('Finding optimal solution...');
+                        const optimalSolution = findOptimalSolution(vertices, c1, c2, objType);
+                        
+                        if (optimalSolution) {
+                            chart.data.datasets.push({
+                                label: 'Optimal Solution',
+                                data: [optimalSolution],
+                                backgroundColor: 'rgba(220, 38, 38, 1)',
+                                borderColor: 'rgba(220, 38, 38, 1)',
+                                borderWidth: 2,
+                                pointRadius: 8,
+                                type: 'scatter'
+                            });
+                            
+                            // Draw objective function line
+                            const objLinePoints = calculateObjectiveLinePoints(optimalSolution, c1, c2, vertices);
+                            chart.data.datasets.push({
+                                label: 'Objective Function',
+                                data: objLinePoints,
+                                borderColor: 'rgba(16, 185, 129, 1)',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                borderWidth: 3,
+                                borderDash: [10, 5],
+                                pointRadius: 0,
+                                type: 'line',
+                                fill: false
+                            });
+                            
+                            // Update feedback
+                            const feedbackElement = document.getElementById('graphical-feedback');
+                            feedbackElement.innerHTML = `
+                                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                                    <strong class="font-bold">Optimal Solution Found!</strong>
+                                    <span class="block">At (${optimalSolution.x.toFixed(2)}, ${optimalSolution.y.toFixed(2)}), Z = ${(c1 * optimalSolution.x + c2 * optimalSolution.y).toFixed(2)}</span>
+                                </div>
+                            `;
+                            feedbackElement.classList.remove('hidden');
+                            
+                            // Add points and update progress
+                            addPoints(10);
+                            updateModuleProgress('graphical', gameState.progress.graphical + 20);
+                        }
+                    }
+                }
+                
+                chart.update();
+            }
+            
+            // Helper function to find feasible region vertices
+            function findFeasibleRegionVertices(constraints) {
+                const vertices = [];
+                
+                // Find all intersection points of constraints
+                for (let i = 0; i < constraints.length; i++) {
+                    for (let j = i + 1; j < constraints.length; j++) {
+                        const c1 = constraints[i];
+                        const c2 = constraints[j];
+                        
+                        // Solve the system of two equations
+                        const a1 = c1.a1, b1 = c1.a2, d1 = c1.b;
+                        const a2 = c2.a1, b2 = c2.a2, d2 = c2.b;
+                        
+                        const det = a1 * b2 - a2 * b1;
+                        
+                        if (det !== 0) {
+                            const x = (b2 * d1 - b1 * d2) / det;
+                            const y = (a1 * d2 - a2 * d1) / det;
+                            
+                            // Check if the point is feasible (satisfies all constraints)
+                            if (x >= 0 && y >= 0) {
+                                let feasible = true;
+                                for (const c of constraints) {
+                                    const lhs = c.a1 * x + c.a2 * y;
+                                    if (c.op === '≤' && lhs > c.b) feasible = false;
+                                    if (c.op === '≥' && lhs < c.b) feasible = false;
+                                    if (c.op === '=' && Math.abs(lhs - c.b) > 0.0001) feasible = false;
+                                }
+                                
+                                if (feasible) {
+                                    vertices.push({ x, y });
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Also consider intersections with axes (x=0 and y=0)
+                vertices.push({ x: 0, y: 0 }); // Origin is always included
+                
+                // To simplify, we'll just return the unique vertices
+                return [...new Map(vertices.map(v => [JSON.stringify(v), v])).values()];
+            }
+            
+            // Helper function to find optimal solution
+            function findOptimalSolution(vertices, c1, c2, objType) {
+                if (vertices.length === 0) return null;
+                
+                let optimal = vertices[0];
+                let optimalValue = c1 * optimal.x + c2 * optimal.y;
+                
+                for (const vertex of vertices) {
+                    const value = c1 * vertex.x + c2 * vertex.y;
+                    if ((objType === 'max' && value > optimalValue) || 
+                        (objType === 'min' && value < optimalValue)) {
+                        optimal = vertex;
+                        optimalValue = value;
+                    }
+                }
+                
+                return optimal;
+            }
+            
+            // Helper function to calculate objective line points
+            function calculateObjectiveLinePoints(optimal, c1, c2, vertices) {
+                // First find the range of the feasible region
+                let minX = Infinity, maxX = -Infinity;
+                let minY = Infinity, maxY = -Infinity;
+                
+                for (const v of vertices) {
+                    minX = Math.min(minX, v.x);
+                    maxX = Math.max(maxX, v.x);
+                    minY = Math.min(minY, v.y);
+                    maxY = Math.max(maxY, v.y);
+                }
+                
+                // Calculate points for the objective line at the optimal value level
+                const optimalValue = c1 * optimal.x + c2 * optimal.y;
+                
+                let p1, p2;
+                
+                if (c2 !== 0) {
+                    // Can express x2 in terms of x1: x2 = (z - c1x1)/c2
+                    p1 = { x: minX - 1, y: (optimalValue - c1 * (minX - 1)) / c2 };
+                    p2 = { x: maxX + 1, y: (optimalValue - c1 * (maxX + 1)) / c2 };
+                } else if (c1 !== 0) {
+                    // Vertical line x1 = z/c1
+                    p1 = { x: optimalValue / c1, y: minY - 1 };
+                    p2 = { x: optimalValue / c1, y: maxY + 1 };
+                } else {
+                    // Both coefficients zero - degenerate case
+                    return [];
+                }
+                
+                return [p1, p2];
+            }
+            
+            // Add initial constraints to UI
+            function addConstraintToUI(constraint, index) {
+                const constraintDiv = document.createElement('div');
+                constraintDiv.className = 'flex items-center constraint-row';
+                constraintDiv.dataset.index = index;
+                
+                constraintDiv.innerHTML = `
+                    <input type="number" value="${constraint.a1}" class="w-12 p-2 border rounded text-right">
+                    <span class="mx-1">x₁ +</span>
+                    <input type="number" value="${constraint.a2}" class="w-12 p-2 border rounded text-right">
+                    <span class="mx-1">x₂</span>
+                    <select class="ml-1 p-2 border rounded">
+                        <option value="≤" ${constraint.op === '≤' ? 'selected' : ''}>≤</option>
+                        <option value="≥" ${constraint.op === '≥' ? 'selected' : ''}>≥</option>
+                        <option value="=" ${constraint.op === '=' ? 'selected' : ''}>=</option>
+                    </select>
+                    <input type="number" value="${constraint.b}" class="w-12 p-2 border rounded text-right ml-1">
+                    <button class="delete-constraint ml-2 p-2 text-red-500 hover:text-red-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                constraintsContainer.appendChild(constraintDiv);
+                
+                // Add event listeners to update chart when constraint changes
+                const inputs = constraintDiv.querySelectorAll('input, select');
+                inputs.forEach(input => {
+                    input.addEventListener('change', () => {
+                        constraints[index] = {
+                            a1: parseFloat(constraintDiv.querySelector('input:nth-child(1)').value) || 0,
+                            a2: parseFloat(constraintDiv.querySelector('input:nth-child(3)').value) || 0,
+                            op: constraintDiv.querySelector('select').value,
+                            b: parseFloat(constraintDiv.querySelector('input:nth-child(6)').value) || 0,
+                            color: constraint.color
+                        };
+                        updateGraphicalModel();
+                    });
+                });
+                
+                // Delete constraint button
+                constraintDiv.querySelector('.delete-constraint').addEventListener('click', () => {
+                    constraints.splice(index, 1);
+                    constraintsContainer.removeChild(constraintDiv);
+                    
+                    // Update indices of remaining constraints
+                    const remainingConstraints = constraintsContainer.querySelectorAll('.constraint-row');
+                    remainingConstraints.forEach((row, i) => {
+                        row.dataset.index = i;
+                    });
+                    
+                    updateGraphicalModel();
+                });
+            }
+            
+            // Initialize constraints in UI
+            constraints.forEach((constraint, i) => {
+                addConstraintToUI(constraint, i);
+            });
+            
+            // Add new constraint button
+            document.getElementById('add-constraint').addEventListener('click', () => {
+                const color = `hsl(${Math.random() * 360}, 70%, 60%)`;
+                const newConstraint = {
+                    a1: 1,
+                    a2: 1,
+                    op: '≤',
+                    b: 5,
+                    color: color
+                };
+                constraints.push(newConstraint);
+                addConstraintToUI(newConstraint, constraints.length - 1);
+                updateGraphicalModel();
+            });
+            
+            // Update chart when objective function changes
+            document.getElementById('objective-type').addEventListener('change', updateGraphicalModel);
+            document.getElementById('obj-x1').addEventListener('change', updateGraphicalModel);
+            document.getElementById('obj-x2').addEventListener('change', updateGraphicalModel);
+            
+            // Reset button
+            document.getElementById('graphical-reset').addEventListener('click', () => {
+                // Reset objective function
+                document.getElementById('objective-type').value = 'max';
+                document.getElementById('obj-x1').value = 3;
+                document.getElementById('obj-x2').value = 5;
+                
+                // Reset constraints
+                constraintsContainer.innerHTML = '';
+                constraints.length = 0;
+                const defaultConstraints = [
+                    { a1: 1, a2: 0, op: '≤', b: 4, color: 'rgba(255, 99, 132, 1)' },
+                    { a1: 0, a2: 2, op: '≤', b: 12, color: 'rgba(54, 162, 235, 1)' },
+                    { a1: 3, a2: 2, op: '≤', b: 18, color: 'rgba(255, 159, 64, 1)' }
+                ];
+                defaultConstraints.forEach((c, i) => {
+                    constraints.push(c);
+                    addConstraintToUI(c, i);
+                });
+                
+                updateGraphicalModel();
+            });
+            
+            // Hint button
+            document.getElementById('graphical-hint').addEventListener('click', () => {
+                const feedbackElement = document.getElementById('graphical-feedback');
+                feedbackElement.innerHTML = `
+                    <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">
+                        <strong class="font-bold">Hint:</strong>
+                        <span class="block">Try adjusting the objective function coefficients to see how the optimal solution changes. The feasible region is the area where all constraints are satisfied simultaneously.</span>
+                    </div>
+                `;
+                feedbackElement.classList.remove('hidden');
+            });
+            
+            // Initial chart update
+            updateGraphicalModel();
+        }
+
+        // Simplex Method Module
+        function setupSimplexModule() {
+            // Initial LP problem
+            const initialLP = {
+                objective: 'max',
+                c: [3, 5, 0, 0, 0], // coefficients for x1, x2, s1, s2, s3
+                A: [
+                    [1, 0, 1, 0, 0], // x1 + s1 = 4
+                    [0, 2, 0, 1, 0], // 2x2 + s2 = 12
+                    [3, 2, 0, 0, 1]  // 3x1 + 2x2 + s3 = 18
+                ],
+                b: [4, 12, 18],  // RHS
+                basicVars: ['s1', 's2', 's3'], // Initial basic variables
+                nonBasicVars: ['x1', 'x2']     // Initial non-basic variables
+            };
+            
+            let currentTableau = createInitialTableau(initialLP);
+            let currentSolution = { basicVariables: initialLP.basicVars, values: initialLP.b.slice() };
+            let history = ["Initial tableau created"];
+            
+            // Populate initial tableau
+            updateSimplexTableau(currentTableau);
+            updateSimplexHistory(history);
+            
+            // Event listeners
+            document.getElementById('perform-pivot').addEventListener('click', performPivotOperation);
+            document.getElementById('simplex-reset').addEventListener('click', resetSimplexProblem);
+            document.getElementById('simplex-hint').addEventListener('click', showSimplexHint);
+            
+            // Create initial tableau
+            function createInitialTableau(lp) {
+                const tableau = [];
+                const numConstraints = lp.A.length;
+                const numVariables = lp.c.length;
+                
+                // Add constraint rows
+                for (let i = 0; i < numConstraints; i++) {
+                    const row = [...lp.A[i], lp.b[i]]; // Include RHS
+                    tableau.push(row);
+                }
+                
+                // Add objective row (convert to minimization form if necessary)
+                const objectiveRow = lp.c.map(c => (lp.objective === 'max') ? -c : c);
+                objectiveRow.push(0); // RHS for objective
+                tableau.push(objectiveRow);
+                
+                return tableau;
+            }
+            
+            // Update the displayed tableau
+            function updateSimplexTableau(tableau) {
+                const tableauBody = document.getElementById('simplex-tableau').querySelector('tbody');
+                tableauBody.innerHTML = '';
+                
+                const basicVars = currentSolution.basicVariables || ['s1', 's2', 's3'];
+                const numConstraints = tableau.length - 1;
+                
+                // Add constraint rows
+                for (let i = 0; i < numConstraints; i++) {
+                    const row = document.createElement('tr');
+                    const basicVarCell = document.createElement('td');
+                    basicVarCell.className = 'font-bold px-2 py-2 bg-gray-50';
+                    basicVarCell.textContent = basicVars[i];
+                    row.appendChild(basicVarCell);
+                    
+                    for (let j = 0; j < tableau[i].length; j++) {
+                        const cell = document.createElement('td');
+                        cell.className = 'px-2 py-2 text-center simplex-cell';
+                        cell.textContent = tableau[i][j].toFixed(2);
+                        row.appendChild(cell);
+                    }
+                    
+                    tableauBody.appendChild(row);
+                }
+                
+                // Add objective row
+                const objRow = document.createElement('tr');
+                const objVarCell = document.createElement('td');
+                objVarCell.className = 'font-bold px-2 py-2 bg-gray-50';
+                objVarCell.textContent = 'Z';
+                objRow.appendChild(objVarCell);
+                
+                for (let j = 0; j < tableau[numConstraints].length; j++) {
+                    const cell = document.createElement('td');
+                    cell.className = 'px-2 py-2 text-center font-bold simplex-cell';
+                    if (j < tableau[numConstraints].length - 1) {
+                        cell.textContent = tableau[numConstraints][j].toFixed(2);
+                        
+                        // Highlight negative coefficients in objective row (for maximization)
+                        if (initialLP.objective === 'max' && tableau[numConstraints][j] < 0 && j < tableau[numConstraints].length - 3) {
+                            cell.classList.add('text-red-600');
+                        }
+                    } else {
+                        cell.textContent = tableau[numConstraints][j].toFixed(2);
+                    }
+                    objRow.appendChild(cell);
+                }
+                
+                tableauBody.appendChild(objRow);
+                
+                // Update entering and leaving variable options
+                updateVariableSelection(tableau);
+            }
+            
+            // Update entering and leaving variable options
+            function updateVariableSelection(tableau) {
+                const enteringSelect = document.getElementById('entering-var');
+                const leavingSelect = document.getElementById('leaving-var');
+                
+                // Clear previous options
+                enteringSelect.innerHTML = '<option value="">Select...</option>';
+                leavingSelect.innerHTML = '<option value="">Select...</option>';
+                
+                const numConstraints = tableau.length - 1;
+                const objectiveRow = tableau[numConstraints];
+                
+                // Add entering variable options (non-basic variables with negative coefficients in objective row for maximization)
+                const nonBasicVars = initialLP.nonBasicVars; // Simplified for this demo
+                
+                for (let i = 0; i < nonBasicVars.length; i++) {
+                    // For maximization, look for negative coefficients in objective row
+                    if (initialLP.objective === 'max' && objectiveRow[i] < 0) {
+                        const option = document.createElement('option');
+                        option.value = nonBasicVars[i].toLowerCase();
+                        option.textContent = nonBasicVars[i];
+                        enteringSelect.appendChild(option);
+                    }
+                }
+                
+                // Add leaving variable options (current basic variables)
+                for (const basicVar of currentSolution.basicVariables) {
+                    const option = document.createElement('option');
+                    option.value = basicVar.toLowerCase();
+                    option.textContent = basicVar;
+                    leavingSelect.appendChild(option);
+                }
+                
+                // Update step description
+                updateSimplexStepDescription(tableau);
+            }
+            
+            // Update the step description
+            function updateSimplexStepDescription(tableau) {
+                const stepDiv = document.getElementById('simplex-step');
+                const numConstraints = tableau.length - 1;
+                const objectiveRow = tableau[numConstraints];
+                
+                stepDiv.innerHTML = '';
+                
+                // Check for optimality
+                let isOptimal = true;
+                for (let i = 0; i < objectiveRow.length - 1; i++) {
+                    if (initialLP.objective === 'max' && objectiveRow[i] < 0) {
+                        isOptimal = false;
+                        break;
+                    }
+                    if (initialLP.objective === 'min' && objectiveRow[i] > 0) {
+                        isOptimal = false;
+                        break;
+                    }
+                }
+                
+                if (isOptimal) {
+                    stepDiv.innerHTML = '<div class="text-green-600 font-bold">Optimal solution reached!</div>';
+                    document.getElementById('entering-var').disabled = true;
+                    document.getElementById('leaving-var').disabled = true;
+                    document.getElementById('perform-pivot').disabled = true;
+                    
+                    // Calculate solution values
+                    const solution = {};
+                    for (let i = 0; i < currentSolution.basicVariables.length; i++) {
+                        solution[currentSolution.basicVariables[i]] = tableau[i][tableau[i].length - 1];
+                    }
+                    
+                    // Update feedback
+                    const feedbackElement = document.getElementById('simplex-feedback');
+                    feedbackElement.innerHTML = `
+                        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                            <strong class="font-bold">Optimal Solution Found!</strong>
+                            <div class="grid grid-cols-2 gap-2 mt-2">
+                                <div>x₁ = ${solution['x1'] ? solution['x1'].toFixed(2) : '0.00'}</div>
+                                <div>x₂ = ${solution['x2'] ? solution['x2'].toFixed(2) : '0.00'}</div>
+                                <div>Z = ${-tableau[numConstraints][tableau[numConstraints].length - 1].toFixed(2)}</div>
+                            </div>
+                        </div>
+                    `;
+                    feedbackElement.classList.remove('hidden');
+                    
+                    // Add points and update progress
+                    addPoints(20);
+                    updateModuleProgress('simplex', 100);
+                } else {
+                    stepDiv.innerHTML = `
+                        <div>1. Check for optimality.</div>
+                        <div>2. Select entering variable (most negative coefficient in objective row for maximization).</div>
+                        <div>3. Select leaving variable (smallest non-negative ratio test).</div>
+                        <div>4. Perform pivot operation.</div>
+                    `;
+                }
+            }
+            
+            // Update the history display
+            function updateSimplexHistory(history) {
+                const historyList = document.getElementById('simplex-history');
+                historyList.innerHTML = '';
+                
+                for (const item of history) {
+                    const li = document.createElement('li');
+                    li.textContent = item;
+                    historyList.appendChild(li);
+                }
+            }
+            
+            // Perform pivot operation
+            function performPivotOperation() {
+                const enteringVar = document.getElementById('entering-var').value;
+                const leavingVar = document.getElementById('leaving-var').value;
+                
+                if (!enteringVar || !leavingVar) {
+                    alert('Please select both entering and leaving variables.');
+                    return;
+                }
+                
+                const enteringIndex = initialLP.nonBasicVars.map(v => v.toLowerCase()).indexOf(enteringVar);
+                const leavingIndex = currentSolution.basicVariables.map(v => v.toLowerCase()).indexOf(leavingVar);
+                
+                if (enteringIndex === -1 || leavingIndex === -1) {
+                    alert('Invalid variable selection.');
+                    return;
+                }
+                
+                // Get pivot element
+                const pivotRow = leavingIndex;
+                const pivotCol = enteringIndex;
+                const pivotElement = currentTableau[pivotRow][pivotCol];
+                
+                if (pivotElement === 0) {
+                    alert('Cannot pivot on a zero element.');
+                    return;
+                }
+                
+                // Create a deep copy of the current tableau
+                const newTableau = JSON.parse(JSON.stringify(currentTableau));
+                
+                // 1. Make pivot element 1 by dividing pivot row by pivot element
+                for (let j = 0; j < newTableau[pivotRow].length; j++) {
+                    newTableau[pivotRow][j] /= pivotElement;
+                }
+                
+                // 2. Make all other elements in pivot column 0
+                for (let i = 0; i < newTableau.length; i++) {
+                    if (i !== pivotRow) {
+                        const factor = newTableau[i][pivotCol];
+                        for (let j = 0; j < newTableau[i].length; j++) {
+                            newTableau[i][j] -= factor * newTableau[pivotRow][j];
+                        }
+                    }
+                }
+                
+                // Update basic variables
+                const newBasicVars = [...currentSolution.basicVariables];
+                newBasicVars[leavingIndex] = initialLP.nonBasicVars[enteringIndex];
+                
+                // Update current solution
+                const newSolutionValues = [];
+                for (let i = 0; i < newBasicVars.length; i++) {
+                    newSolutionValues.push(newTableau[i][newTableau[i].length - 1]);
+                }
+                
+                currentSolution = {
+                    basicVariables: newBasicVars,
+                    values: newSolutionValues
+                };
+                
+                // Update tableau and history
+                currentTableau = newTableau;
+                history.push(`Pivoted with entering ${initialLP.nonBasicVars[enteringIndex]} and leaving ${currentSolution.basicVariables[leavingIndex]}`);
+                updateSimplexTableau(currentTableau);
+                updateSimplexHistory(history);
+                updateVariableSelection(currentTableau);
+                
+                // Add points
+                addPoints(10);
+                updateModuleProgress('simplex', gameState.progress.simplex + 20);
+            }
+            
+            // Reset the simplex problem to initial state
+            function resetSimplexProblem() {
+                currentTableau = createInitialTableau(initialLP);
+                currentSolution = { basicVariables: initialLP.basicVars, values: initialLP.b.slice() };
+                history = ["Initial tableau created"];
+                
+                updateSimplexTableau(currentTableau);
+                updateSimplexHistory(history);
+                updateVariableSelection(currentTableau);
+                
+                // Enable inputs
+                document.getElementById('entering-var').disabled = false;
+                document.getElementById('leaving-var').disabled = false;
+                document.getElementById('perform-pivot').disabled = false;
+                
+                // Clear feedback
+                document.getElementById('simplex-feedback').classList.add('hidden');
+            }
+            
+            // Show hint
+            function showSimplexHint() {
+                const feedbackElement = document.getElementById('simplex-feedback');
+                feedbackElement.innerHTML = `
+                    <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">
+                        <strong class="font-bold">Simplex Method Hints:</strong>
+                        <ul class="list-disc pl-5 mt-1 space-y-1">
+                            <li>For maximization, choose the entering variable with the most negative coefficient in the objective row.</li>
+                            <li>For leaving variable, perform the ratio test (RHS divided by corresponding positive entry in pivot column).</li>
+                            <li>The pivot element is at the intersection of the entering variable column and leaving variable row.</li>
+                            <li>Optimality is reached when all coefficients in the objective row are non-negative (for maximization).</li>
+                        </ul>
+                    </div>
+                `;
+                feedbackElement.classList.remove('hidden');
+            }
+        }
+
+        // Duality Module
+        function setupDualityModule() {
+            // Initial primal problem
+            const initialPrimal = {
+                objective: 'max',
+                c: [4, 6],     // coefficients for x1, x2
+                A: [
+                    [1, 1],    // 1x1 + 1x2 ≤ 8
+                    [1, 3]     // 1x1 + 3x2 ≤ 12
+                ],
+                signs: ['≤', '≤'],
+                b: [8, 12]     // RHS
+            };
+            
+            // Generate dual problem from primal
+            function generateDualProblem(primal) {
+                const dual = {
+                    objective: primal.objective === 'max' ? 'min' : 'max',
+                    c: primal.b,
+                    A: [],
+                    b: primal.c,
+                    signs: []
+                };
+                
+                // Transpose A matrix
+                for (let j = 0; j < primal.A[0].length; j++) {
+                    dual.A.push([]);
+                    for (let i = 0; i < primal.A.length; i++) {
+                        dual.A[j].push(primal.A[i][j]);
+                    }
+                }
+                
+                // Determine dual constraint signs based on primal variable types (all >=0 in standard form)
+                // Assuming primal is in standard form (maximization with ≤ constraints)
+                if (primal.objective === 'max') {
+                    dual.signs = dual.A.map(() => '≥');
+                } else {
+                    dual.signs = dual.A.map(() => '≤');
+                }
+                
+                return dual;
+            }
+            
+            // Update dual problem display
+            function updateDualProblemDisplay(dual) {
+                const dualObjective = document.getElementById('dual-obj');
+                const dualConstraints = document.getElementById('dual-constraints');
+                
+                // Objective function
+                let objStr = '';
+                for (let i = 0; i < dual.c.length; i++) {
+                    if (i > 0) objStr += ' + ';
+                    objStr += `${dual.c[i]}${dual.objective === 'max' ? 'y' : 'w'}<sub>${i+1}</sub>`;
+                }
+                dualObjective.innerHTML = objStr;
+                
+                // Constraints
+                dualConstraints.innerHTML = '';
+                for (let i = 0; i < dual.A.length; i++) {
+                    let constraintStr = '';
+                    for (let j = 0; j < dual.A[i].length; j++) {
+                        if (j > 0) constraintStr += ' + ';
+                        constraintStr += `${dual.A[i][j]}${dual.objective === 'min' ? 'y' : 'w'}<sub>${j+1}</sub>`;
+                    }
+                    constraintStr += ` ${dual.signs[i]} ${dual.b[i]}`;
+                    
+                    const li = document.createElement('li');
+                    li.innerHTML = constraintStr;
+                    dualConstraints.appendChild(li);
+                }
+            }
+            
+            // Update primal and dual solutions display
+            function updateSolutionsDisplay(primal) {
+                const primalSolX1 = document.getElementById('primal-sol-x1');
+                const primalSolX2 = document.getElementById('primal-sol-x2');
+                const primalSlack = document.getElementById('primal-slack');
+                const primalObjVal = document.getElementById('primal-obj-val');
+                
+                const dualSolY1 = document.getElementById('dual-sol-y1');
+                const dualSolY2 = document.getElementById('dual-sol-y2');
+                const dualSurplus = document.getElementById('dual-surplus');
+                const dualObjVal = document.getElementById('dual-obj-val');
+                
+                // For the demo, we'll use known optimal solutions to the initial problem
+                if (primal.objective === 'max' && 
+                    primal.c[0] === 4 && primal.c[1] === 6 &&
+                    JSON.stringify(primal.A) === JSON.stringify([[1,1],[1,3]]) &&
+                    JSON.stringify(primal.b) === JSON.stringify([8,12])) {
+                    
+                    // Known optimal solutions for the textbook example
+                    primalSolX1.value = '3';
+                    primalSolX2.value = '5';
+                    primalSlack.value = '0';
+                    primalObjVal.value = '42';  // 4*3 + 6*5
+                    
+                    dualSolY1.value = '3';
+                    dualSolY2.value = '1';
+                    dualSurplus.value = '0';
+                    dualObjVal.value = '42';    // 8*3 + 12*1
+                }
+            }
+            
+            // Event listeners
+            document.getElementById('primal-objective').addEventListener('change', updateProblem);
+            document.getElementById('primal-c1').addEventListener('change', updateProblem);
+            document.getElementById('primal-c2').addEventListener('change', updateProblem);
+            document.getElementById('primal-a11').addEventListener('change', updateProblem);
+            document.getElementById('primal-a12').addEventListener('change', updateProblem);
+            document.getElementById('primal-b1').addEventListener('change', updateProblem);
+            document.getElementById('primal-a21').addEventListener('change', updateProblem);
+            document.getElementById('primal-a22').addEventListener('change', updateProblem);
+            document.getElementById('primal-b2').addEventListener('change', updateProblem);
+            
+            document.querySelectorAll('#primal-constraints select').forEach(select => {
+                select.addEventListener('change', updateProblem);
+            });
+            
+            document.getElementById('check-duality').addEventListener('click', checkDualityTheorems);
+            document.getElementById('duality-reset').addEventListener('click', resetDualityProblem);
+            document.getElementById('duality-hint').addEventListener('click', showDualityHint);
+            
+            // Add constraint button
+            document.getElementById('add-primal-constraint').addEventListener('click', () => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center';
+                div.innerHTML = `
+                    <input type="number" value="1" class="w-8 p-1 border rounded text-right">
+                    <span class="mx-1">x₁ +</span>
+                    <input type="number" value="1" class="w-8 p-1 border rounded text-right">
+                    <span class="mx-1">x₂</span>
+                    <select class="ml-1 p-1 border rounded text-xs w-12">
+                        <option value="≤">≤</option>
+                        <option value="≥">≥</option>
+                        <option value="=">=</option>
+                    </select>
+                    <input type="number" value="5" class="w-10 p-1 border rounded text-right ml-1">
+                    <button class="remove-constraint ml-2 text-red-500 hover:text-red-700">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                `;
+                
+                document.getElementById('primal-constraints').appendChild(div);
+                
+                // Add event listeners to the new inputs
+                div.querySelectorAll('input, select').forEach(el => {
+                    el.addEventListener('change', updateProblem);
+                });
+                
+                // Remove constraint button
+                div.querySelector('.remove-constraint').addEventListener('click', () => {
+                    div.remove();
+                    updateProblem();
+                });
+                
+                updateProblem();
+            });
+            
+            // Update the primal and dual problems
+            function updateProblem() {
+                // Get primal problem parameters from UI
+                const primal = {
+                    objective: document.getElementById('primal-objective').value,
+                    c: [
+                        parseFloat(document.getElementById('primal-c1').value) || 0,
+                        parseFloat(document.getElementById('primal-c2').value) || 0
+                    ],
+                    A: [],
+                    signs: [],
+                    b: []
+                };
+                
+                // Get constraints
+                const constraintRows = document.getElementById('primal-constraints').children;
+                for (const row of constraintRows) {
+                    const inputs = row.querySelectorAll('input');
+                    const select = row.querySelector('select');
+                    
+                    primal.A.push([
+                        parseFloat(inputs[0].value) || 0,
+                        parseFloat(inputs[1].value) || 0
+                    ]);
+                    primal.signs.push(select.value);
+                    primal.b.push(parseFloat(inputs[2].value) || 0);
+                }
+                
+                // Generate dual problem
+                const dual = generateDualProblem(primal);
+                
+                // Update dual display
+                updateDualProblemDisplay(dual);
+                
+                // Update solutions
+                updateSolutionsDisplay(primal);
+                
+                // Clear feedback
+                document.getElementById('duality-feedback').classList.add('hidden');
+            }
+            
+            // Check duality theorems
+            function checkDualityTheorems() {
+                const primalObj = parseFloat(document.getElementById('primal-obj-val').value) || 0;
+                const dualObj = parseFloat(document.getElementById('dual-obj-val').value) || 0;
+                const primalX1 = parseFloat(document.getElementById('primal-sol-x1').value) || 0;
+                const primalX2 = parseFloat(document.getElementById('primal-sol-x2').value) || 0;
+                const primalSlack = parseFloat(document.getElementById('primal-slack').value) || 0;
+                const dualY1 = parseFloat(document.getElementById('dual-sol-y1').value) || 0;
+                const dualY2 = parseFloat(document.getElementById('dual-sol-y2').value) || 0;
+                const dualSurplus = parseFloat(document.getElementById('dual-surplus').value) || 0;
+                
+                const primalSign = document.getElementById('primal-objective').value === 'max' ? 1 : -1;
+                const dualSign = document.getElementById('primal-objective').value === 'max' ? -1 : 1;
+                
+                const feedbackElement = document.getElementById('duality-feedback');
+                
+                // Check weak duality
+                if ((primalSign * primalObj) <= (dualSign * dualObj)) {
+                    feedbackElement.innerHTML = `
+                        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                            <strong class="font-bold">Weak Duality Holds:</strong>
+                            <span class="block">Primal (${primalObj.toFixed(2)}) ≤ Dual (${dualObj.toFixed(2)})</span>
+                        </div>
+                    `;
+                } else {
+                    feedbackElement.innerHTML = `
+                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                            <strong class="font-bold">Weak Duality Violation:</strong>
+                            <span class="block">Primal (${primalObj.toFixed(2)}) > Dual (${dualObj.toFixed(2)})</span>
+                            <span class="block text-xs mt-1">This suggests these solutions are not both feasible.</span>
+                        </div>
+                    `;
+                }
+                
+                // Check strong duality if objectives are equal
+                if (Math.abs(primalObj - dualObj) < 0.001) {
+                    feedbackElement.innerHTML += `
+                        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mt-2">
+                            <strong class="font-bold">Strong Duality Holds:</strong>
+                            <span class="block">Primal and Dual optimal values are equal (${primalObj.toFixed(2)})</span>
+                        </div>
+                    `;
+                }
+                
+                // Check complementary slackness
+                const c1 = parseFloat(document.getElementById('primal-c1').value) || 0;
+                const c2 = parseFloat(document.getElementById('primal-c2').value) || 0;
+                const a11 = parseFloat(document.getElementById('primal-a11').value) || 0;
+                const a12 = parseFloat(document.getElementById('primal-a12').value) || 0;
+                const b1 = parseFloat(document.getElementById('primal-b1').value) || 0;
+                const a21 = parseFloat(document.getElementById('primal-a21').value) || 0;
+                const a22 = parseFloat(document.getElementById('primal-a22').value) || 0;
+                const b2 = parseFloat(document.getElementById('primal-b2').value) || 0;
+                
+                // Calculate slack/surplus values for primal and dual
+                const primalConstraint1 = a11*primalX1 + a12*primalX2;
+                const primalConstraint2 = a21*primalX1 + a22*primalX2;
+                
+                const primalSlack1 = b1 - primalConstraint1;
+                const primalSlack2 = b2 - primalConstraint2;
+                
+                const dualConstraint1 = dualY1*a11 + dualY2*a21;
+                const dualConstraint2 = dualY1*a12 + dualY2*a22;
+                
+                const dualSurplus1 = dualConstraint1 - c1;
+                const dualSurplus2 = dualConstraint2 - c2;
+                
+                feedbackElement.innerHTML += `
+                    <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mt-2">
+                        <strong class="font-bold">Complementary Slackness:</strong>
+                        <div class="grid grid-cols-3 gap-1 text-xs mt-1">
+                            <div class="font-bold">Constraint</div>
+                            <div class="font-bold">Primal Slack</div>
+                            <div class="font-bold">Dual Variable</div>
+                            <div>Constraint 1</div>
+                            <div>${primalSlack1.toFixed(2)}</div>
+                            <div>y₁ = ${dualY1.toFixed(2)}</div>
+                            <div>Constraint 2</div>
+                            <div>${primalSlack2.toFixed(2)}</div>
+                            <div>y₂ = ${dualY2.toFixed(2)}</div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1 text-xs mt-2">
+                            <div class="font-bold">Variable</div>
+                            <div class="font-bold">Dual Surplus</div>
+                            <div class="font-bold">Primal Variable</div>
+                            <div>x₁</div>
+                            <div>${dualSurplus1.toFixed(2)}</div>
+                            <div>x₁ = ${primalX1.toFixed(2)}</div>
+                            <div>x₂</div>
+                            <div>${dualSurplus2.toFixed(2)}</div>
+                            <div>x₂ = ${primalX2.toFixed(2)}</div>
+                        </div>
+                    </div>
+                `;
+                
+                feedbackElement.classList.remove('hidden');
+                
+                // Add points and update progress
+                addPoints(15);
+                updateModuleProgress('duality', gameState.progress.duality + 30);
+            }
+            
+            // Reset duality problem
+            function resetDualityProblem() {
+                // Reset primal problem
+                document.getElementById('primal-objective').value = 'max';
+                document.getElementById('primal-c1').value = '4';
+                document.getElementById('primal-c2').value = '6';
+                
+                document.getElementById('primal-a11').value = '1';
+                document.getElementById('primal-a12').value = '1';
+                document.querySelector('#primal-constraints select:nth-child(1)').value = '≤';
+                document.getElementById('primal-b1').value = '8';
+                
+                document.getElementById('primal-a21').value = '1';
+                document.getElementById('primal-a22').value = '3';
+                document.querySelector('#primal-constraints select:nth-child(2)').value = '≤';
+                document.getElementById('primal-b2').value = '12';
+                
+                // Remove any additional constraints
+                const constraintsContainer = document.getElementById('primal-constraints');
+                while (constraintsContainer.children.length > 2) {
+                    constraintsContainer.removeChild(constraintsContainer.lastChild);
+                }
+                
+                // Update problem and clear feedback
+                updateProblem();
+                document.getElementById('duality-feedback').classList.add('hidden');
+            }
+            
+            // Show duality hint
+            function showDualityHint() {
+                const feedbackElement = document.getElementById('duality-feedback');
+                feedbackElement.innerHTML = `
+                    <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">
+                        <strong class="font-bold">Duality Hints:</strong>
+                        <ul class="list-disc pl-5 mt-1 space-y-1">
+                            <li><strong>Weak Duality:</strong> Any feasible primal solution's objective ≤ any feasible dual solution's objective (for max primal).</li>
+                            <li><strong>Strong Duality:</strong> At optimality, the primal and dual objectives are equal.</li>
+                            <li><strong>Complementary Slackness:</strong> A primal variable and its corresponding dual constraint cannot both be slack at optimality.</li>
+                            <li>Try adjusting the solutions to see how these theorems hold or are violated.</li>
+                        </ul>
+                    </div>
+                `;
+                feedbackElement.classList.remove('hidden');
+            }
+            
+            // Initialize the problem
+            updateProblem();
+        }
+
+        // Quiz Module
+        function setupQuizModule() {
+            let currentQuestionIndex = 0;
+            
+            // Event listeners
+            document.getElementById('submit-quiz').addEventListener('click', checkAnswer);
+            document.getElementById('next-question').addEventListener('click', showNextQuestion);
+            document.getElementById('review-quiz').addEventListener('click', reviewQuiz);
+            document.getElementById('new-quiz').addEventListener('click', startQuiz);
+            document.getElementById('quiz-restart').addEventListener('click', startQuiz);
+            
+            // Start the quiz
+            function startQuiz() {
+                currentQuestionIndex = 0;
+                gameState.quiz.answers = [];
+                gameState.quiz.score = 0;
+                showQuestion(currentQuestionIndex);
+                
+                // Hide results and feedback
+                document.getElementById('quiz-results').classList.add('hidden');
+                document.getElementById('quiz-feedback').classList.add('hidden');
+                
+                // Show question and enable submit button
+                document.getElementById('quiz-question').classList.remove('hidden');
+                document.getElementById('submit-quiz').classList.remove('hidden');
+                
+                // Update question counter
+                document.getElementById('current-question').textContent = currentQuestionIndex + 1;
+                document.getElementById('total-questions').textContent = gameState.quiz.questions.length;
+            }
+            
+            // Show a specific question
+            function showQuestion(index) {
+                if (index >= 0 && index < gameState.quiz.questions.length) {
+                    const question = gameState.quiz.questions[index];
+                    
+                    document.getElementById('question-text').textContent = question.question;
+                    document.getElementById('option1-text').textContent = question.options[0];
+                    document.getElementById('option2-text').textContent = question.options[1];
+                    document.getElementById('option3-text').textContent = question.options[2];
+                    document.getElementById('option4-text').textContent = question.options[3];
+                    
+                    // Clear previous selection
+                    document.querySelectorAll('input[name="quiz"]').forEach(radio => {
+                        radio.checked = false;
+                    });
+                    
+                    // Update question counter
+                    document.getElementById('current-question').textContent = index + 1;
+                }
+            }
+            
+            // Check the selected answer
+            function checkAnswer() {
+                const selectedOption = document.querySelector('input[name="quiz"]:checked');
+                
+                if (!selectedOption) {
+                    alert('Please select an answer.');
+                    return;
+                }
+                
+                const userAnswer = selectedOption.value;
+                const currentQuestion = gameState.quiz.questions[currentQuestionIndex];
+                const isCorrect = userAnswer === currentQuestion.answer;
+                
+                // Update quiz state
+                gameState.quiz.answers.push({
+                    questionIndex: currentQuestionIndex,
+                    answer: userAnswer,
+                    isCorrect: isCorrect
+                });
+                
+                if (isCorrect) {
+                    gameState.quiz.score++;
+                    addPoints(10);
+                }
+                
+                // Show feedback
+                const feedbackCorrect = document.getElementById('feedback-correct');
+                const feedbackIncorrect = document.getElementById('feedback-incorrect');
+                
+                if (isCorrect) {
+                    feedbackCorrect.classList.remove('hidden');
+                    feedbackIncorrect.classList.add('hidden');
+                    document.getElementById('correct-explanation').textContent = currentQuestion.explanation;
+                } else {
+                    feedbackCorrect.classList.add('hidden');
+                    feedbackIncorrect.classList.remove('hidden');
+                    document.getElementById('incorrect-explanation').textContent = 
+                        `${currentQuestion.explanation} The correct answer was ${currentQuestion.answer}.`;
+                }
+                
+                // Hide submit button and show next button
+                document.getElementById('submit-quiz').classList.add('hidden');
+                document.getElementById('quiz-feedback').classList.remove('hidden');
+                
+                // Update progress if this is the last question
+                if (currentQuestionIndex === gameState.quiz.questions.length - 1) {
+                    updateModuleProgress('graphical', gameState.progress.graphical + 10);
+                    updateModuleProgress('simplex', gameState.progress.simplex + 10);
+                    updateModuleProgress('duality', gameState.progress.duality + 10);
+                    showQuizResults();
+                }
+            }
+            
+            // Show next question or results
+            function showNextQuestion() {
+                currentQuestionIndex++;
+                
+                if (currentQuestionIndex < gameState.quiz.questions.length) {
+                    showQuestion(currentQuestionIndex);
+                    document.getElementById('submit-quiz').classList.remove('hidden');
+                    document.getElementById('quiz-feedback').classList.add('hidden');
+                } else {
+                    showQuizResults();
+                }
+            }
+            
+            // Show quiz results
+            function showQuizResults() {
+                const percentage = Math.round((gameState.quiz.score / gameState.quiz.questions.length) * 100);
+                
+                document.getElementById('quiz-question').classList.add('hidden');
+                document.getElementById('quiz-feedback').classList.add('hidden');
+                document.getElementById('quiz-results').classList.remove('hidden');
+                
+                document.getElementById('score-percentage').textContent = `${percentage}%`;
+                document.getElementById('result-total').textContent = gameState.quiz.questions.length;
+                document.getElementById('result-correct').textContent = gameState.quiz.score;
+                document.getElementById('result-incorrect').textContent = gameState.quiz.questions.length - gameState.quiz.score;
+                
+                // Set score message
+                let message = '';
+                if (percentage >= 80) {
+                    message = 'Excellent! You have a strong understanding of the material.';
+                } else if (percentage >= 60) {
+                    message = 'Good job! Review the incorrect answers to improve.';
+                } else {
+                    message = 'Keep practicing! Try reviewing the modules before attempting the quiz again.';
+                }
+                document.getElementById('score-message').textContent = message;
+                
+                // Add bonus points based on performance
+                if (percentage === 100) {
+                    addPoints(30);
+                } else if (percentage >= 80) {
+                    addPoints(20);
+                } else if (percentage >= 60) {
+                    addPoints(10);
+                }
+            }
+            
+            // Review quiz answers
+            function reviewQuiz() {
+                document.getElementById('quiz-results').classList.add('hidden');
+                
+                let reviewHTML = '';
+                gameState.quiz.answers.forEach((answer, i) => {
+                    const question = gameState.quiz.questions[answer.questionIndex];
+                    reviewHTML += `
+                        <div class="mb-4 p-3 border rounded ${answer.isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}">
+                            <div class="font-bold mb-1">Question ${i + 1}: ${question.question}</div>
+                            <div class="mb-1">Your answer: ${answer.answer} ${answer.isCorrect ? '✅' : '❌'}</div>
+                            ${!answer.isCorrect ? `<div class="mb-1">Correct answer: ${question.answer}</div>` : ''}
+                            <div class="text-sm">Explanation: ${question.explanation}</div>
+                        </div>
+                    `;
+                });
+                
+                const feedbackElement = document.getElementById('quiz-feedback');
+                feedbackElement.innerHTML = `
+                    <div>
+                        <h4 class="font-bold mb-2">Quiz Review</h4>
+                        ${reviewHTML}
+                    </div>
+                `;
+                feedbackElement.classList.remove('hidden');
+            }
+            
+            // Start the quiz when module is opened
+            moduleButtons.quiz.addEventListener('click', startQuiz);
+        }
+    </script>
+</body>
+</html>
