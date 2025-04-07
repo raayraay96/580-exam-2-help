@@ -2,7 +2,8 @@
  * Three.js scene for the Simplex Method section
  */
 
-function initSimplexScene() {
+// Export the initialization function
+window.initSimplexScene = function() {
     // Create base scene
     const { scene, camera, renderer, controls } = createBaseScene('simplex');
     scenes.simplex = scene;

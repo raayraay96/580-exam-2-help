@@ -2,7 +2,8 @@
  * Three.js scene for the Duality section
  */
 
-function initDualityScene() {
+// Export the initialization function
+window.initDualityScene = function() {
     // Create base scene
     const { scene, camera, renderer, controls } = createBaseScene('duality');
     scenes.duality = scene;

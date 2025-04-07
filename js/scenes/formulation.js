@@ -446,6 +446,8 @@ window.initFormulationScene = function() {
     // Add custom animation for this scene
     animations.formulation = function() {
         const time = Date.now() * 0.001;
+        const woodHours = 3 * tables + 2 * chairs;
+        const finishHours = tables + 2 * chairs;
 
         // Animate based on current step
         if (currentFormulationStep >= 1) {
