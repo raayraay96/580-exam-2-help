@@ -261,7 +261,87 @@
                         <div class="canvas-container focus-highlight"
                              role="img"
                              aria-label="3D visualization of production constraints">
-                            <div id="formulation-canvas"></div>
+                            <div id="formulation-canvas" style="width: 100%; height: 400px;"></div>
+                        </div>
+
+                        <!-- Problem selector -->
+                        <div class="mb-4 mt-2">
+                            <label for="problem-selector" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Problem Type:</label>
+                            <div class="flex gap-2">
+                                <select id="problem-selector" class="flex-grow bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="furniture">Furniture Manufacturing</option>
+                                    <option value="diet">Diet Optimization</option>
+                                    <option value="transportation">Transportation Problem</option>
+                                    <option value="investment">Investment Portfolio</option>
+                                    <option value="production">Production Planning</option>
+                                </select>
+                                <button id="load-problem" class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300">
+                                    <i class="fas fa-play mr-2"></i>Load Problem
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Problem description -->
+                        <div id="problem-description" class="p-4 mb-4 bg-blue-50 dark:bg-blue-900 rounded-lg border-l-4 border-blue-500">
+                            <h4 class="font-bold text-blue-800 dark:text-blue-300 mb-2">Furniture Manufacturing</h4>
+                            <p class="text-gray-900 dark:text-gray-200">A furniture company makes tables and chairs. Each table requires 3 hours of woodworking and 1 hour of finishing. Each chair requires 2 hours of woodworking and 2 hours of finishing. The company has 120 hours of woodworking time and 80 hours of finishing time available. Each table sells for $70 profit and each chair for $50 profit. How many of each should be made to maximize profit?</p>
+                        </div>
+
+                        <!-- Step-by-step walkthrough buttons -->
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <button id="formulation-step1" class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300 flex items-center">
+                                <span class="bg-white text-blue-600 rounded-full w-5 h-5 flex items-center justify-center mr-2 font-bold">1</span>
+                                <span>Define Variables</span>
+                            </button>
+                            <button id="formulation-step2" class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-300 flex items-center">
+                                <span class="bg-white text-green-600 rounded-full w-5 h-5 flex items-center justify-center mr-2 font-bold">2</span>
+                                <span>Set Objective</span>
+                            </button>
+                            <button id="formulation-step3" class="px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors duration-300 flex items-center">
+                                <span class="bg-white text-yellow-600 rounded-full w-5 h-5 flex items-center justify-center mr-2 font-bold">3</span>
+                                <span>Add Constraints</span>
+                            </button>
+                            <button id="formulation-step4" class="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-300 flex items-center">
+                                <span class="bg-white text-red-600 rounded-full w-5 h-5 flex items-center justify-center mr-2 font-bold">4</span>
+                                <span>Find Solution</span>
+                            </button>
+                            <button id="formulation-reset" class="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-300 flex items-center">
+                                <i class="fas fa-redo mr-2"></i>
+                                <span>Reset</span>
+                            </button>
+                        </div>
+
+                        <!-- Step explanation box -->
+                        <div id="formulation-explanation" class="p-4 mb-4 bg-indigo-50 rounded-lg border-l-4 border-indigo-500 hidden">
+                            <h4 class="font-bold text-indigo-800 mb-2" id="formulation-step-title">Step Title</h4>
+                            <p class="text-gray-900 mb-3" id="formulation-step-description">Step description will appear here.</p>
+
+                            <!-- Mathematical steps panel -->
+                            <div id="math-steps-panel" class="mt-3 p-3 bg-white rounded-lg border border-indigo-200">
+                                <h5 class="font-bold text-indigo-700 mb-2 flex items-center">
+                                    <i class="fas fa-calculator mr-2"></i> Mathematical Steps
+                                </h5>
+                                <div id="math-steps-content" class="font-mono text-sm whitespace-pre-wrap"></div>
+                            </div>
+                        </div>
+
+                        <!-- Solution summary box -->
+                        <div id="solution-summary" class="p-4 mb-4 bg-green-50 rounded-lg border-l-4 border-green-500 hidden">
+                            <h4 class="font-bold text-green-800 mb-2">Optimal Solution</h4>
+                            <div class="grid grid-cols-2 gap-2 mb-3">
+                                <div class="bg-white p-2 rounded border border-green-200">
+                                    <span class="font-medium">Variables:</span>
+                                    <div id="solution-variables" class="mt-1"></div>
+                                </div>
+                                <div class="bg-white p-2 rounded border border-green-200">
+                                    <span class="font-medium">Objective Value:</span>
+                                    <div id="solution-objective" class="mt-1 font-bold text-green-700"></div>
+                                </div>
+                            </div>
+                            <div class="bg-white p-2 rounded border border-green-200">
+                                <span class="font-medium">Binding Constraints:</span>
+                                <div id="solution-constraints" class="mt-1"></div>
+                            </div>
                         </div>
 
                         <!-- Added validation messages -->
@@ -276,8 +356,8 @@
 
                             <div class="mb-4">
                                 <div class="flex justify-between mb-1">
-                                    <span class="font-medium">Tables: <span id="tables-value" class="font-bold">0</span></span>
-                                    <span class="text-sm text-gray-600">Max: 40</span>
+                                    <span class="font-medium"><label for="tables-slider">Tables:</label> <span id="tables-value" class="font-bold">0</span></span>
+                                    <span class="text-sm text-gray-600 max-value" data-for="tables">Max: 40</span>
                                 </div>
                                 <input type="range" id="tables-slider" min="0" max="40" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                                        aria-label="Tables slider" aria-valuemin="0" aria-valuemax="40" aria-valuenow="0">
@@ -285,8 +365,8 @@
 
                             <div class="mb-4">
                                 <div class="flex justify-between mb-1">
-                                    <span class="font-medium">Chairs: <span id="chairs-value" class="font-bold">0</span></span>
-                                    <span class="text-sm text-gray-600">Max: 40</span>
+                                    <span class="font-medium"><label for="chairs-slider">Chairs:</label> <span id="chairs-value" class="font-bold">0</span></span>
+                                    <span class="text-sm text-gray-600 max-value" data-for="chairs">Max: 40</span>
                                 </div>
                                 <input type="range" id="chairs-slider" min="0" max="40" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                                        aria-label="Chairs slider" aria-valuemin="0" aria-valuemax="40" aria-valuenow="0">

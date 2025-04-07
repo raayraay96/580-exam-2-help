@@ -9,7 +9,8 @@ let objectiveLines = [];
 let optimalPoint;
 let currentStep = 0;
 
-function initGraphicalScene() {
+// Export the initialization function
+window.initGraphicalScene = function() {
     // Create base scene
     const { scene, camera, renderer, controls } = createBaseScene('graphical');
     scenes.graphical = scene;

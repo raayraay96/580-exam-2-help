@@ -4,19 +4,36 @@
 
 // Initialize all Three.js scenes
 function initThreeJS() {
+    console.log("Initializing Three.js scenes...");
     // Initialize scenes for each section
-    initIntroScene();
-    initFormulationScene();
-    initGraphicalScene();
-    initStandardScene();
-    initSimplexScene();
-    initDualityScene();
+    try {
+        initIntroScene();
+        console.log("Intro scene initialized.");
+        initFormulationScene();
+        console.log("Formulation scene initialized.");
+        initGraphicalScene();
+        console.log("Graphical scene initialized.");
+        initStandardScene();
+        console.log("Standard scene initialized.");
+        initSimplexScene();
+        console.log("Simplex scene initialized.");
+        initDualityScene();
+        console.log("Duality scene initialized.");
+    } catch (error) {
+        console.error("Error initializing scenes:", error);
+    }
 
     // Start animation loop
-    animate();
+    try {
+        animate();
+        console.log("Animation loop started.");
+    } catch (error) {
+        console.error("Error starting animation loop:", error);
+    }
 
     // Update scene colors based on dark mode preference
     updateSceneColors(window.matchMedia('(prefers-color-scheme: dark)').matches);
+    console.log("Three.js scenes initialized.");
 }
 
 // Initialize the application when DOM is loaded

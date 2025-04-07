@@ -61,13 +61,16 @@
 /* Ensure the formulation canvas is visible */
 #formulation-canvas {
     height: 400px !important;
+    width: 100% !important;
     display: block !important;
 }
 
 #formulation .canvas-container {
     height: 400px;
+    width: 100%;
     display: block !important;
     background-color: #f8fafc;
+    position: relative;
 }
 
 .highlight-red { color: #ef4444; font-weight: bold; }
