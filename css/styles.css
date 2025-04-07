@@ -49,6 +49,15 @@
     background-color: #f8fafc;
 }
 
+/* Make the graphical solution canvas larger */
+#graphical-canvas {
+    height: 500px !important;
+}
+
+#graphical .canvas-container {
+    height: 500px;
+}
+
 .highlight-red { color: #ef4444; font-weight: bold; }
 .highlight-blue { color: #3b82f6; font-weight: bold; }
 .highlight-green { color: #10b981; font-weight: bold; }

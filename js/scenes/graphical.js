@@ -251,7 +251,7 @@ function createObjectiveLines(scene) {
 }
 
 // Create optimal point
-function createOptimalPoint() {
+function createOptimalPoint(scene) {
     const geometry = new THREE.SphereGeometry(0.3, 32, 32);
     const material = new THREE.MeshPhongMaterial({
         color: 0xef4444, // Red
