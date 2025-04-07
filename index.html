@@ -61,6 +61,10 @@
                             <div class="progress-dot" data-section="duality" tabindex="0" role="button" aria-label="Go to Duality section"></div>
                             <span class="text-xs mt-1">Duality</span>
                         </div>
+                        <div class="flex flex-col items-center">
+                            <div class="progress-dot" data-section="practice" tabindex="0" role="button" aria-label="Go to Practice Problems section"></div>
+                            <span class="text-xs mt-1">Practice</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -97,6 +101,11 @@
                     onclick="navigateTo('duality')"
                     aria-label="Navigate to Duality section">
                 <i class="fas fa-code-branch mr-2" aria-hidden="true"></i> Duality
+            </button>
+            <button class="nav-pill px-5 py-2 bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 flex items-center"
+                    onclick="navigateTo('practice')"
+                    aria-label="Navigate to Practice Problems section">
+                <i class="fas fa-graduation-cap mr-2" aria-hidden="true"></i> Practice Problems
             </button>
         </div>
 
@@ -1027,6 +1036,97 @@
                 </div>
             </div>
         </section>
+
+        <!-- Practice Section -->
+        <section id="practice" class="mb-16 hidden">
+            <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+                <h2 class="text-3xl font-bold mb-6 flex items-center">
+                    <span class="step-indicator bg-purple-100 text-purple-800">7</span>
+                    <span class="highlight-purple">Exam</span> Practice Problems
+                </h2>
+
+                <div class="mb-4">
+                    <label for="practice-problem-selector" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Problem Type:</label>
+                    <select id="practice-problem-selector" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full">
+                        <option value="0">Manufacturing Problem</option>
+                        <option value="1">Diet Problem</option>
+                        <option value="2">Investment Problem</option>
+                    </select>
+                </div>
+
+                <!-- Problem Container -->
+                <div id="practice-problem-container" class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <h3 id="practice-problem-title" class="text-xl font-bold mb-3">Problem Title</h3>
+                    <p id="practice-problem-description" class="mb-4">Problem description will appear here.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <!-- Variables -->
+                        <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <h4 class="font-bold text-blue-800 mb-2">Variables</h4>
+                            <div id="practice-variables-content" class="font-mono"></div>
+                        </div>
+
+                        <!-- Objective Function -->
+                        <div class="p-3 bg-green-50 rounded-lg border border-green-200">
+                            <h4 class="font-bold text-green-800 mb-2">Objective Function</h4>
+                            <div id="practice-objective-content" class="font-mono"></div>
+                        </div>
+
+                        <!-- Constraints -->
+                        <div class="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                            <h4 class="font-bold text-yellow-800 mb-2">Constraints</h4>
+                            <div id="practice-constraints-content" class="font-mono"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Try It Yourself Section -->
+                <div class="mb-6 p-4 bg-indigo-50 rounded-lg border-l-4 border-indigo-500">
+                    <h3 class="text-xl font-bold mb-3 flex items-center">
+                        <i class="fas fa-pencil-alt text-indigo-600 mr-2"></i> Try It Yourself
+                    </h3>
+                    <p class="mb-4">Solve this problem on your own, then enter your answer below to check if it's correct.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label for="practice-x1-answer" class="block text-sm font-medium text-gray-700 mb-1">Value of x₁:</label>
+                            <input type="number" id="practice-x1-answer" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Enter value">
+                        </div>
+                        <div>
+                            <label for="practice-x2-answer" class="block text-sm font-medium text-gray-700 mb-1">Value of x₂:</label>
+                            <input type="number" id="practice-x2-answer" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Enter value">
+                        </div>
+                        <div>
+                            <label for="practice-z-answer" class="block text-sm font-medium text-gray-700 mb-1">Objective Value (Z):</label>
+                            <input type="number" id="practice-z-answer" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Enter value">
+                        </div>
+                    </div>
+
+                    <button id="practice-check-answer" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-300">
+                        <i class="fas fa-check mr-2"></i> Check Answer
+                    </button>
+
+                    <div id="practice-answer-feedback" class="mt-4 p-3 rounded-lg border-l-4 hidden"></div>
+                </div>
+
+                <!-- Solution Container -->
+                <div id="practice-solution-container" class="hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Step-by-Step Solution</h3>
+                        <div class="flex gap-2">
+                            <button id="practice-show-step" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300">
+                                <i class="fas fa-step-forward mr-2"></i> Show Next Step
+                            </button>
+                            <button id="practice-reset" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-300">
+                                <i class="fas fa-redo mr-2"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="practice-steps-container" class="space-y-4"></div>
+                </div>
+            </div>
+        </section>
     </div>
 
     <!-- JavaScript files -->
@@ -1039,6 +1139,7 @@
     <script src="js/scenes/standard.js"></script>
     <script src="js/scenes/simplex.js"></script>
     <script src="js/scenes/duality.js"></script>
+    <script src="js/scenes/practice.js"></script>
     <script src="js/navigation.js"></script>
     <script src="js/main.js"></script>
 </body>

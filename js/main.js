@@ -37,6 +37,11 @@ function initThreeJS() {
             initDualityScene();
             console.log("Duality scene initialized.");
         }
+
+        if (typeof initPracticeSection === 'function') {
+            initPracticeSection();
+            console.log("Practice section initialized.");
+        }
     } catch (error) {
         console.error("Error initializing scenes:", error);
     }
