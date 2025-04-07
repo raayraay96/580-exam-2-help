@@ -58,6 +58,18 @@
     height: 500px;
 }
 
+/* Ensure the formulation canvas is visible */
+#formulation-canvas {
+    height: 400px !important;
+    display: block !important;
+}
+
+#formulation .canvas-container {
+    height: 400px;
+    display: block !important;
+    background-color: #f8fafc;
+}
+
 .highlight-red { color: #ef4444; font-weight: bold; }
 .highlight-blue { color: #3b82f6; font-weight: bold; }
 .highlight-green { color: #10b981; font-weight: bold; }

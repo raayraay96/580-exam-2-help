@@ -21,6 +21,12 @@ function initFormulationScene() {
     camera.position.set(8, 8, 8);
     camera.lookAt(0, 0, 0);
 
+    // Make sure the renderer is properly sized
+    const container = document.getElementById('formulation-canvas');
+    if (container) {
+        renderer.setSize(container.clientWidth, container.clientHeight);
+    }
+
     // Create axes with labels
     const axesHelper = new THREE.AxesHelper(5);
     scene.add(axesHelper);

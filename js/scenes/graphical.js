@@ -18,31 +18,38 @@ function initGraphicalScene() {
     controls.graphical = controls;
 
     // Position camera for 2D view (top-down)
-    camera.position.set(0, 20, 0);
+    camera.position.set(0, 25, 0);
     camera.lookAt(0, 0, 0);
     controls.maxPolarAngle = Math.PI / 2.5; // Limit rotation to maintain top-down view
 
+    // Make sure the renderer is properly sized
+    const container = document.getElementById('graphical-canvas');
+    renderer.setSize(container.clientWidth, container.clientHeight);
+
+    // Increase the size of the visualization elements for better visibility
+    const scale = 1.5; // Scale factor to make everything bigger
+
     // Create a 2D coordinate system
-    const gridHelper = new THREE.GridHelper(20, 20);
+    const gridHelper = new THREE.GridHelper(20 * scale, 20);
     gridHelper.rotation.x = Math.PI / 2;
     scene.add(gridHelper);
 
     // Create axes with labels
-    const axesHelper = new THREE.AxesHelper(10);
+    const axesHelper = new THREE.AxesHelper(15 * scale);
     axesHelper.position.set(0, 0.01, 0); // Slightly above grid to avoid z-fighting
     scene.add(axesHelper);
 
     // Create constraint lines (initially hidden)
-    createConstraintLines(scene);
+    createConstraintLines(scene, scale);
 
     // Create feasible region (initially hidden)
-    createFeasibleRegion(scene);
+    createFeasibleRegion(scene, scale);
 
     // Create objective function lines (initially hidden)
-    createObjectiveLines(scene);
+    createObjectiveLines(scene, scale);
 
     // Create optimal point (initially hidden)
-    createOptimalPoint(scene);
+    createOptimalPoint(scene, scale);
 
     // Add button event listeners
     document.getElementById('show-constraints').addEventListener('click', () => {
@@ -111,13 +118,13 @@ function initGraphicalScene() {
 }
 
 // Create constraint lines
-function createConstraintLines(scene) {
+function createConstraintLines(scene, scale = 1) {
     // First constraint: 2x₁ + x₂ ≤ 10
     const constraint1Points = [];
     // x₁ = 0 → x₂ = 10
-    constraint1Points.push(new THREE.Vector3(0, 0, 10));
+    constraint1Points.push(new THREE.Vector3(0, 0, 10 * scale));
     // x₂ = 0 → x₁ = 5
-    constraint1Points.push(new THREE.Vector3(5, 0, 0));
+    constraint1Points.push(new THREE.Vector3(5 * scale, 0, 0));
 
     const constraint1Geometry = new THREE.BufferGeometry().setFromPoints(constraint1Points);
     const constraint1Material = new THREE.LineBasicMaterial({
@@ -134,9 +141,9 @@ function createConstraintLines(scene) {
     // Second constraint: x₁ + 3x₂ ≤ 15
     const constraint2Points = [];
     // x₁ = 0 → x₂ = 5
-    constraint2Points.push(new THREE.Vector3(0, 0, 5));
+    constraint2Points.push(new THREE.Vector3(0, 0, 5 * scale));
     // x₂ = 0 → x₁ = 15
-    constraint2Points.push(new THREE.Vector3(15, 0, 0));
+    constraint2Points.push(new THREE.Vector3(15 * scale, 0, 0));
 
     const constraint2Geometry = new THREE.BufferGeometry().setFromPoints(constraint2Points);
     const constraint2Material = new THREE.LineBasicMaterial({
@@ -154,12 +161,12 @@ function createConstraintLines(scene) {
     // x₁ ≥ 0 (z-axis)
     const xAxisPoints = [];
     xAxisPoints.push(new THREE.Vector3(0, 0, 0));
-    xAxisPoints.push(new THREE.Vector3(0, 0, 10));
+    xAxisPoints.push(new THREE.Vector3(0, 0, 15 * scale));
 
     const xAxisGeometry = new THREE.BufferGeometry().setFromPoints(xAxisPoints);
     const xAxisMaterial = new THREE.LineBasicMaterial({
         color: 0xf59e0b, // Yellow
-        linewidth: 2,
+        linewidth: 3, // Thicker line for better visibility
         visible: false
     });
 
@@ -171,12 +178,12 @@ function createConstraintLines(scene) {
     // x₂ ≥ 0 (x-axis)
     const zAxisPoints = [];
     zAxisPoints.push(new THREE.Vector3(0, 0, 0));
-    zAxisPoints.push(new THREE.Vector3(10, 0, 0));
+    zAxisPoints.push(new THREE.Vector3(15 * scale, 0, 0));
 
     const zAxisGeometry = new THREE.BufferGeometry().setFromPoints(zAxisPoints);
     const zAxisMaterial = new THREE.LineBasicMaterial({
         color: 0xf59e0b, // Yellow
-        linewidth: 2,
+        linewidth: 3, // Thicker line for better visibility
         visible: false
     });
 
@@ -187,7 +194,7 @@ function createConstraintLines(scene) {
 }
 
 // Create feasible region
-function createFeasibleRegion(scene) {
+function createFeasibleRegion(scene, scale = 1) {
     // Calculate intersection points
     // Origin: (0, 0)
     // Constraint 1 x-intercept: (5, 0)
@@ -198,9 +205,9 @@ function createFeasibleRegion(scene) {
 
     const shape = new THREE.Shape();
     shape.moveTo(0, 0); // Origin
-    shape.lineTo(5, 0); // Constraint 1 x-intercept
-    shape.lineTo(3, 4); // Intersection point
-    shape.lineTo(0, 5); // Constraint 2 y-intercept
+    shape.lineTo(5 * scale, 0); // Constraint 1 x-intercept
+    shape.lineTo(3 * scale, 4 * scale); // Intersection point
+    shape.lineTo(0, 5 * scale); // Constraint 2 y-intercept
     shape.lineTo(0, 0); // Back to origin
 
     const geometry = new THREE.ShapeGeometry(shape);
@@ -219,7 +226,7 @@ function createFeasibleRegion(scene) {
 }
 
 // Create objective function lines
-function createObjectiveLines(scene) {
+function createObjectiveLines(scene, scale = 1) {
     // Objective function: Z = 5x₁ + 3x₂
     // Create multiple parallel lines for different Z values
     const zValues = [0, 10, 20, 30, 40];
@@ -230,9 +237,9 @@ function createObjectiveLines(scene) {
 
         const points = [];
         // When x₁ = 0, x₂ = Z / 3
-        points.push(new THREE.Vector3(0, 0, z / 3));
+        points.push(new THREE.Vector3(0, 0, (z / 3) * scale));
         // When x₂ = 0, x₁ = Z / 5
-        points.push(new THREE.Vector3(z / 5, 0, 0));
+        points.push(new THREE.Vector3((z / 5) * scale, 0, 0));
 
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
         const material = new THREE.LineBasicMaterial({
@@ -251,17 +258,17 @@ function createObjectiveLines(scene) {
 }
 
 // Create optimal point
-function createOptimalPoint(scene) {
-    const geometry = new THREE.SphereGeometry(0.3, 32, 32);
+function createOptimalPoint(scene, scale = 1) {
+    const geometry = new THREE.SphereGeometry(0.4, 32, 32); // Larger sphere for better visibility
     const material = new THREE.MeshPhongMaterial({
         color: 0xef4444, // Red
         emissive: 0xef4444,
-        emissiveIntensity: 0.3,
+        emissiveIntensity: 0.5, // Brighter for better visibility
         visible: false
     });
 
     optimalPoint = new THREE.Mesh(geometry, material);
-    optimalPoint.position.set(3, 0.1, 4); // Slightly above the plane to avoid z-fighting
+    optimalPoint.position.set(3 * scale, 0.1, 4 * scale); // Slightly above the plane to avoid z-fighting
     optimalPoint.name = 'optimalPoint';
     scene.add(optimalPoint);
 }
