@@ -2,8 +2,8 @@
  * Three.js scene for the Introduction section
  */
 
-// Export the initialization function
-window.initIntroScene = function() {
+// Define the initialization function
+function initIntroScene() {
     // Create base scene
     const { scene, camera, renderer, controls } = createBaseScene('intro');
     scenes.intro = scene;

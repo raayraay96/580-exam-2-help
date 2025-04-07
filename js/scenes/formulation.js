@@ -230,8 +230,8 @@ The maximum value of Z is 2,900 at the point (20, 30)`
     }
 };
 
-// Export the initialization function
-window.initFormulationScene = function() {
+// Define the initialization function
+function initFormulationScene() {
     // Create base scene
     const { scene, camera, renderer, controls } = createBaseScene('formulation');
     scenes.formulation = scene;

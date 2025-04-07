@@ -9,8 +9,8 @@ let objectiveLines = [];
 let optimalPoint;
 let currentStep = 0;
 
-// Export the initialization function
-window.initGraphicalScene = function() {
+// Define the initialization function
+function initGraphicalScene() {
     // Create base scene
     const { scene, camera, renderer, controls } = createBaseScene('graphical');
     scenes.graphical = scene;
@@ -268,6 +268,7 @@ function createOptimalPoint(scene, scale = 1) {
         visible: false
     });
 
+    // Use the global optimalPoint variable
     optimalPoint = new THREE.Mesh(geometry, material);
     optimalPoint.position.set(3 * scale, 0.1, 4 * scale); // Slightly above the plane to avoid z-fighting
     optimalPoint.name = 'optimalPoint';

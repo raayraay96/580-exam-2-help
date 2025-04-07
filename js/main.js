@@ -7,18 +7,36 @@ function initThreeJS() {
     console.log("Initializing Three.js scenes...");
     // Initialize scenes for each section
     try {
-        initIntroScene();
-        console.log("Intro scene initialized.");
-        initFormulationScene();
-        console.log("Formulation scene initialized.");
-        initGraphicalScene();
-        console.log("Graphical scene initialized.");
-        initStandardScene();
-        console.log("Standard scene initialized.");
-        initSimplexScene();
-        console.log("Simplex scene initialized.");
-        initDualityScene();
-        console.log("Duality scene initialized.");
+        // Check if each initialization function exists before calling it
+        if (typeof initIntroScene === 'function') {
+            initIntroScene();
+            console.log("Intro scene initialized.");
+        }
+
+        if (typeof initFormulationScene === 'function') {
+            initFormulationScene();
+            console.log("Formulation scene initialized.");
+        }
+
+        if (typeof initGraphicalScene === 'function') {
+            initGraphicalScene();
+            console.log("Graphical scene initialized.");
+        }
+
+        if (typeof initStandardScene === 'function') {
+            initStandardScene();
+            console.log("Standard scene initialized.");
+        }
+
+        if (typeof initSimplexScene === 'function') {
+            initSimplexScene();
+            console.log("Simplex scene initialized.");
+        }
+
+        if (typeof initDualityScene === 'function') {
+            initDualityScene();
+            console.log("Duality scene initialized.");
+        }
     } catch (error) {
         console.error("Error initializing scenes:", error);
     }

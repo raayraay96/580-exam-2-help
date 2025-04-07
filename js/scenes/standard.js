@@ -2,8 +2,8 @@
  * Three.js scene for the Standard Form section
  */
 
-// Export the initialization function
-window.initStandardScene = function() {
+// Define the initialization function
+function initStandardScene() {
     // Create base scene
     const { scene, camera, renderer, controls } = createBaseScene('standard');
     scenes.standard = scene;
