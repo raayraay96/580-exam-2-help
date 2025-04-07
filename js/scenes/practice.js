@@ -169,7 +169,7 @@ function initPracticeSection() {
     document.getElementById('practice-show-step').addEventListener('click', showNextStep);
     document.getElementById('practice-reset').addEventListener('click', resetPractice);
     document.getElementById('practice-check-answer').addEventListener('click', checkAnswer);
-    
+
     // Load the first problem by default
     loadProblem(0);
 }
@@ -178,15 +178,15 @@ function initPracticeSection() {
 function loadProblem(problemIndex) {
     // Reset the current state
     resetPractice();
-    
+
     // Update the current problem index
     practiceState.currentProblem = problemIndex;
     const problem = practiceState.problems[problemIndex];
-    
+
     // Update the problem description
     document.getElementById('practice-problem-title').textContent = problem.title;
     document.getElementById('practice-problem-description').textContent = problem.description;
-    
+
     // Update the variables section
     const variablesContent = document.getElementById('practice-variables-content');
     variablesContent.innerHTML = '';
@@ -196,11 +196,11 @@ function loadProblem(problemIndex) {
         variableDiv.innerHTML = `${variable.symbol} = ${variable.name}`;
         variablesContent.appendChild(variableDiv);
     });
-    
+
     // Update the objective function section
     const objectiveContent = document.getElementById('practice-objective-content');
     objectiveContent.innerHTML = `${problem.objective.type === 'maximize' ? 'Maximize' : 'Minimize'} Z = ${problem.objective.function}`;
-    
+
     // Update the constraints section
     const constraintsContent = document.getElementById('practice-constraints-content');
     constraintsContent.innerHTML = '';
@@ -211,11 +211,11 @@ function loadProblem(problemIndex) {
         constraintsContent.appendChild(constraintDiv);
     });
     constraintsContent.innerHTML += '<div class="mb-2">x₁ ≥ 0, x₂ ≥ 0 (Non-negativity)</div>';
-    
+
     // Reset the solution steps
     document.getElementById('practice-steps-container').innerHTML = '';
     document.getElementById('practice-solution-container').classList.add('hidden');
-    
+
     // Show the problem formulation
     document.getElementById('practice-problem-container').classList.remove('hidden');
 }
@@ -232,33 +232,78 @@ function showNextStep() {
     const problem = practiceState.problems[practiceState.currentProblem];
     const stepsContainer = document.getElementById('practice-steps-container');
     const currentStepCount = stepsContainer.children.length;
-    
+
     // Check if we have more steps to show
     if (currentStepCount < problem.steps.length) {
         const step = problem.steps[currentStepCount];
-        
-        // Create a new step element
+
+        // Create a new step element with a color based on the step number
         const stepElement = document.createElement('div');
-        stepElement.className = 'mb-4 p-4 bg-white rounded-lg border border-gray-200';
-        
+
+        // Choose a different color for each step
+        let stepColor;
+        switch(currentStepCount) {
+            case 0: stepColor = 'blue'; break;
+            case 1: stepColor = 'green'; break;
+            case 2: stepColor = 'yellow'; break;
+            case 3: stepColor = 'purple'; break;
+            case 4: stepColor = 'pink'; break;
+            default: stepColor = 'indigo';
+        }
+
+        stepElement.className = `mb-4 p-4 bg-${stepColor}-50 rounded-lg border-l-4 border-${stepColor}-500`;
+
         // Add step number and title
         const stepHeader = document.createElement('h4');
-        stepHeader.className = 'font-bold text-lg mb-2 flex items-center';
-        stepHeader.innerHTML = `<span class="bg-indigo-100 text-indigo-800 rounded-full w-6 h-6 flex items-center justify-center mr-2">${currentStepCount + 1}</span> ${step.title}`;
+        stepHeader.className = `font-bold text-lg mb-3 flex items-center text-${stepColor}-800`;
+        stepHeader.innerHTML = `<span class="bg-${stepColor}-100 text-${stepColor}-800 rounded-full w-7 h-7 flex items-center justify-center mr-2 font-bold">${currentStepCount + 1}</span> ${step.title}`;
         stepElement.appendChild(stepHeader);
-        
-        // Add step content
+
+        // Add step content with better formatting
         const stepContent = document.createElement('div');
-        stepContent.className = 'whitespace-pre-wrap font-mono text-sm';
+        stepContent.className = 'whitespace-pre-wrap font-mono text-base bg-white p-3 rounded-lg border border-gray-200';
         stepContent.textContent = step.content;
         stepElement.appendChild(stepContent);
-        
+
+        // Add a "Try it yourself" prompt if appropriate
+        if (currentStepCount < 4) { // Don't add for the final steps
+            const tryItSection = document.createElement('div');
+            tryItSection.className = 'mt-3 p-3 bg-indigo-50 rounded-lg';
+
+            let tryItPrompt = '';
+            switch(currentStepCount) {
+                case 0: // Variables
+                    tryItPrompt = 'Try defining the variables for this problem on your own before proceeding.';
+                    break;
+                case 1: // Objective
+                    tryItPrompt = 'Try writing the objective function for this problem on your own before proceeding.';
+                    break;
+                case 2: // Constraints
+                    tryItPrompt = 'Try identifying all the constraints for this problem on your own before proceeding.';
+                    break;
+                case 3: // Corner points
+                    tryItPrompt = 'Try finding the corner points by solving the constraint equations on your own before proceeding.';
+                    break;
+            }
+
+            tryItSection.innerHTML = `<div class="flex items-center mb-2">
+                <i class="fas fa-pencil-alt text-indigo-600 mr-2"></i>
+                <span class="font-bold text-indigo-800">Try it yourself:</span>
+            </div>
+            <p>${tryItPrompt}</p>`;
+
+            stepElement.appendChild(tryItSection);
+        }
+
         // Add the step to the container
         stepsContainer.appendChild(stepElement);
-        
+
+        // Scroll to the new step
+        stepElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
         // Show the solution container if it was hidden
         document.getElementById('practice-solution-container').classList.remove('hidden');
-        
+
         // If this was the last step, show the final answer
         if (currentStepCount === problem.steps.length - 1) {
             showFinalAnswer();
@@ -269,21 +314,21 @@ function showNextStep() {
 // Show the final answer
 function showFinalAnswer() {
     const problem = practiceState.problems[practiceState.currentProblem];
-    
+
     // Create the final answer element
     const finalAnswerElement = document.createElement('div');
     finalAnswerElement.className = 'mt-6 p-4 bg-green-50 rounded-lg border-l-4 border-green-500';
-    
+
     // Add the title
     const finalAnswerTitle = document.createElement('h4');
     finalAnswerTitle.className = 'font-bold text-lg mb-2 flex items-center';
     finalAnswerTitle.innerHTML = '<i class="fas fa-check-circle text-green-500 mr-2"></i> Final Answer';
     finalAnswerElement.appendChild(finalAnswerTitle);
-    
+
     // Add the answer content
     const finalAnswerContent = document.createElement('div');
     finalAnswerContent.className = 'grid grid-cols-2 gap-2 mb-3';
-    
+
     // Add variable values
     const variablesDiv = document.createElement('div');
     variablesDiv.className = 'bg-white p-2 rounded border border-green-200';
@@ -294,7 +339,7 @@ function showFinalAnswer() {
             ${problem.variables.x2.symbol} = ${problem.solution.x2}
         </div>`;
     finalAnswerContent.appendChild(variablesDiv);
-    
+
     // Add objective value
     const objectiveDiv = document.createElement('div');
     objectiveDiv.className = 'bg-white p-2 rounded border border-green-200';
@@ -303,7 +348,7 @@ function showFinalAnswer() {
             Z = ${problem.solution.value}
         </div>`;
     finalAnswerContent.appendChild(objectiveDiv);
-    
+
     // Add binding constraints
     if (problem.solution.bindingConstraints) {
         const constraintsDiv = document.createElement('div');
@@ -314,12 +359,12 @@ function showFinalAnswer() {
             </div>`;
         finalAnswerContent.appendChild(constraintsDiv);
     }
-    
+
     finalAnswerElement.appendChild(finalAnswerContent);
-    
+
     // Add the final answer to the steps container
     document.getElementById('practice-steps-container').appendChild(finalAnswerElement);
-    
+
     // Disable the "Show Next Step" button
     document.getElementById('practice-show-step').disabled = true;
 }
@@ -328,18 +373,18 @@ function showFinalAnswer() {
 function resetPractice() {
     // Clear the steps container
     document.getElementById('practice-steps-container').innerHTML = '';
-    
+
     // Hide the solution container
     document.getElementById('practice-solution-container').classList.add('hidden');
-    
+
     // Enable the "Show Next Step" button
     document.getElementById('practice-show-step').disabled = false;
-    
+
     // Clear user answers
     document.getElementById('practice-x1-answer').value = '';
     document.getElementById('practice-x2-answer').value = '';
     document.getElementById('practice-z-answer').value = '';
-    
+
     // Hide the answer feedback
     document.getElementById('practice-answer-feedback').classList.add('hidden');
 }
@@ -350,36 +395,86 @@ function checkAnswer() {
     const x1Answer = parseFloat(document.getElementById('practice-x1-answer').value);
     const x2Answer = parseFloat(document.getElementById('practice-x2-answer').value);
     const zAnswer = parseFloat(document.getElementById('practice-z-answer').value);
-    
+
     // Check if the answers are valid numbers
     if (isNaN(x1Answer) || isNaN(x2Answer) || isNaN(zAnswer)) {
         showAnswerFeedback(false, 'Please enter valid numbers for all fields.');
         return;
     }
-    
+
     // Check if the answers are correct
     const x1Correct = Math.abs(x1Answer - problem.solution.x1) < 0.01;
     const x2Correct = Math.abs(x2Answer - problem.solution.x2) < 0.01;
     const zCorrect = Math.abs(zAnswer - problem.solution.value) < 0.01;
-    
+
     if (x1Correct && x2Correct && zCorrect) {
         showAnswerFeedback(true, 'Correct! Your answer matches the optimal solution.');
     } else {
-        let feedback = 'Your answer is not correct. ';
-        
-        if (!x1Correct) {
-            feedback += `The correct value for ${problem.variables.x1.symbol} is ${problem.solution.x1}. `;
+        // Create detailed feedback with explanation
+        let feedback = '<div class="mb-3">Your answer is not correct.</div>';
+
+        // Add a table showing the comparison between user's answer and correct answer
+        feedback += '<div class="overflow-x-auto mb-4"><table class="w-full border-collapse">';
+        feedback += '<thead class="bg-red-100"><tr><th class="p-2 border border-red-300 text-left">Variable</th><th class="p-2 border border-red-300 text-left">Your Answer</th><th class="p-2 border border-red-300 text-left">Correct Answer</th></tr></thead>';
+        feedback += '<tbody>';
+
+        // Add row for x1
+        feedback += `<tr class="${x1Correct ? 'bg-green-50' : 'bg-red-50'}"><td class="p-2 border border-red-300 font-medium">${problem.variables.x1.symbol} (${problem.variables.x1.name})</td><td class="p-2 border border-red-300">${x1Answer}</td><td class="p-2 border border-red-300 font-bold">${problem.solution.x1}</td></tr>`;
+
+        // Add row for x2
+        feedback += `<tr class="${x2Correct ? 'bg-green-50' : 'bg-red-50'}"><td class="p-2 border border-red-300 font-medium">${problem.variables.x2.symbol} (${problem.variables.x2.name})</td><td class="p-2 border border-red-300">${x2Answer}</td><td class="p-2 border border-red-300 font-bold">${problem.solution.x2}</td></tr>`;
+
+        // Add row for Z
+        feedback += `<tr class="${zCorrect ? 'bg-green-50' : 'bg-red-50'}"><td class="p-2 border border-red-300 font-medium">Z (Objective Value)</td><td class="p-2 border border-red-300">${zAnswer}</td><td class="p-2 border border-red-300 font-bold">${problem.solution.value}</td></tr>`;
+
+        feedback += '</tbody></table></div>';
+
+        // Add explanation section
+        feedback += '<div class="mt-4">';
+        feedback += '<h4 class="font-bold mb-2">Where to focus:</h4>';
+        feedback += '<ul class="list-disc pl-5 space-y-2">';
+
+        // Add specific guidance based on which parts are incorrect
+        if (!x1Correct || !x2Correct) {
+            feedback += '<li>Check your <strong>corner points</strong>. Make sure you\'ve correctly identified all feasible points where constraints intersect.</li>';
+            feedback += '<li>Verify your <strong>constraint equations</strong>. Double-check that you\'ve set up the equations correctly and solved the system accurately.</li>';
         }
-        
-        if (!x2Correct) {
-            feedback += `The correct value for ${problem.variables.x2.symbol} is ${problem.solution.x2}. `;
-        }
-        
+
         if (!zCorrect) {
-            feedback += `The correct objective value is ${problem.solution.value}.`;
+            feedback += '<li>Review your <strong>objective function calculation</strong>. Make sure you\'ve substituted the correct values into the objective function.</li>';
+            feedback += '<li>Ensure you\'ve evaluated the objective function at <strong>all corner points</strong> to find the true maximum/minimum.</li>';
         }
-        
+
+        feedback += '</ul>';
+        feedback += '</div>';
+
+        // Add a hint for the specific problem type
+        feedback += '<div class="mt-4 p-3 bg-blue-50 border-l-4 border-blue-500 rounded">';
+        feedback += '<h4 class="font-bold mb-2">Hint:</h4>';
+
+        switch(practiceState.currentProblem) {
+            case 0: // Manufacturing Problem
+                feedback += '<p>For manufacturing problems, remember to check where the resource constraints intersect. The optimal solution is often at the intersection of two binding constraints.</p>';
+                break;
+            case 1: // Diet Problem
+                feedback += '<p>For diet problems, pay special attention to the nutritional requirement constraints. The optimal solution is typically at the intersection of two or more of these constraints.</p>';
+                break;
+            case 2: // Investment Problem
+                feedback += '<p>For investment problems, carefully analyze the risk and return constraints. The optimal solution often lies at the boundary of the feasible region where the return is maximized.</p>';
+                break;
+        }
+
+        feedback += '</div>';
+
+        // Add a suggestion to use the step-by-step solution
+        feedback += '<div class="mt-4">';
+        feedback += '<p class="font-medium">Need more help? Click the "Show Next Step" button below to see a detailed step-by-step solution.</p>';
+        feedback += '</div>';
+
         showAnswerFeedback(false, feedback);
+
+        // Automatically show the solution container to help the student
+        document.getElementById('practice-solution-container').classList.remove('hidden');
     }
 }
 
@@ -387,14 +482,19 @@ function checkAnswer() {
 function showAnswerFeedback(isCorrect, message) {
     const feedbackElement = document.getElementById('practice-answer-feedback');
     feedbackElement.classList.remove('hidden', 'bg-green-50', 'border-green-500', 'bg-red-50', 'border-red-500');
-    
+
     if (isCorrect) {
         feedbackElement.classList.add('bg-green-50', 'border-green-500');
-        feedbackElement.innerHTML = `<i class="fas fa-check-circle text-green-500 mr-2"></i> ${message}`;
+        feedbackElement.innerHTML = `<div class="flex items-start"><i class="fas fa-check-circle text-green-500 mr-2 mt-1"></i><div>${message}</div></div>`;
     } else {
         feedbackElement.classList.add('bg-red-50', 'border-red-500');
-        feedbackElement.innerHTML = `<i class="fas fa-times-circle text-red-500 mr-2"></i> ${message}`;
+        // Make the feedback box larger for detailed feedback
+        feedbackElement.classList.add('p-4');
+        feedbackElement.innerHTML = `<div class="flex items-start"><i class="fas fa-times-circle text-red-500 mr-2 mt-1"></i><div>${message}</div></div>`;
     }
+
+    // Scroll to the feedback element
+    feedbackElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 // Export the initialization function
