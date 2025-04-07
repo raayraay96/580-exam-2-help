@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADHD-Friendly Linear Programming Guide</title>
+
+    <!-- External CDN resources -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.9.1/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@10.4.0/lib/browser/math.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Internal stylesheets -->
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Header with progress tracking -->
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl font-bold mb-4">
+                <span class="rainbow">Interactive</span> <span class="highlight-blue">Linear Programming</span> <span class="rainbow">Guide</span>
+            </h1>
+            <p class="text-xl text-gray-700">Learn optimization through <span class="highlight-purple">playful interactions</span> and <span class="highlight-green">visual storytelling</span></p>
+
+            <div class="mt-8 flex items-center justify-center">
+                <div class="flex-1 max-w-2xl">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-sm font-medium text-blue-700">Your progress</span>
+                        <span class="text-sm font-medium text-blue-700" id="progress-percent">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-4">
+                        <div id="progress-bar" class="bg-gradient-to-r from-blue-500 to-purple-500 h-4 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+                    </div>
+
+                    <div class="flex justify-between mt-4">
+                        <div class="flex flex-col items-center">
+                            <div class="progress-dot active" data-section="intro" tabindex="0" role="button" aria-label="Go to Introduction section"></div>
+                            <span class="text-xs mt-1">Intro</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="progress-dot" data-section="formulation" tabindex="0" role="button" aria-label="Go to Problem Formulation section"></div>
+                            <span class="text-xs mt-1">Formulation</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="progress-dot" data-section="graphical" tabindex="0" role="button" aria-label="Go to Graphical Solution section"></div>
+                            <span class="text-xs mt-1">Graphical</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="progress-dot" data-section="standard" tabindex="0" role="button" aria-label="Go to Standard Form section"></div>
+                            <span class="text-xs mt-1">Standard Form</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="progress-dot" data-section="simplex" tabindex="0" role="button" aria-label="Go to Simplex Method section"></div>
+                            <span class="text-xs mt-1">Simplex</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="progress-dot" data-section="duality" tabindex="0" role="button" aria-label="Go to Duality section"></div>
+                            <span class="text-xs mt-1">Duality</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Pills -->
+        <div class="flex flex-wrap justify-center mb-10 gap-3">
+            <button class="nav-pill px-5 py-2 bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 flex items-center"
+                    onclick="navigateTo('intro')"
+                    aria-label="Navigate to Introduction section">
+                <i class="fas fa-home mr-2" aria-hidden="true"></i> Introduction
+            </button>
+            <button class="nav-pill px-5 py-2 bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 flex items-center"
+                    onclick="navigateTo('formulation')"
+                    aria-label="Navigate to Problem Formulation section">
+                <i class="fas fa-puzzle-piece mr-2" aria-hidden="true"></i> Problem Formulation
+            </button>
+            <button class="nav-pill px-5 py-2 bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 flex items-center"
+                    onclick="navigateTo('graphical')"
+                    aria-label="Navigate to Graphical Solution section">
+                <i class="fas fa-chart-line mr-2" aria-hidden="true"></i> Graphical Solution
+            </button>
+            <button class="nav-pill px-5 py-2 bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 flex items-center"
+                    onclick="navigateTo('standard')"
+                    aria-label="Navigate to Standard Form section">
+                <i class="fas fa-exchange-alt mr-2" aria-hidden="true"></i> Standard Form
+            </button>
+            <button class="nav-pill px-5 py-2 bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 flex items-center"
+                    onclick="navigateTo('simplex')"
+                    aria-label="Navigate to Simplex Method section">
+                <i class="fas fa-route mr-2" aria-hidden="true"></i> Simplex Method
+            </button>
+            <button class="nav-pill px-5 py-2 bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 flex items-center"
+                    onclick="navigateTo('duality')"
+                    aria-label="Navigate to Duality section">
+                <i class="fas fa-code-branch mr-2" aria-hidden="true"></i> Duality
+            </button>
+        </div>
+
+        <!-- Introduction Section -->
+        <section id="intro" class="mb-16">
+            <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+                <h2 class="text-3xl font-bold mb-6 flex items-center">
+                    <span class="step-indicator bg-blue-100 text-blue-800">1</span>
+                    Welcome to <span class="highlight-blue">Linear Programming</span>!
+                </h2>
+
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <div class="lg:w-1/2">
+                        <p class="mb-4 text-lg">Linear programming is like being a <span class="highlight-purple">superhero chef</span> who needs to make the most delicious meal possible with limited ingredients!</p>
+
+                        <div class="attention-grabber bg-blue-50 border-blue-500 mb-6">
+                            <h3 class="font-bold text-lg mb-2 flex items-center">
+                                <i class="fas fa-lightbulb text-yellow-500 mr-2" aria-hidden="true"></i> Key Idea
+                            </h3>
+                            <p>It's all about finding the <span class="highlight-red">best possible outcome</span> (like maximum profit or minimum cost) when you have <span class="highlight-blue">limited resources</span> and <span class="highlight-green">rules to follow</span>.</p>
+                        </div>
+
+                        <!-- Keyboard navigation instructions -->
+                        <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                            <h3 class="font-bold text-blue-800 mb-2 flex items-center">
+                                <i class="fas fa-keyboard mr-2" aria-hidden="true"></i> Keyboard Shortcuts
+                            </h3>
+                            <ul class="list-disc pl-5 text-gray-900">
+                                <li>Use <span class="font-semibold">Tab</span> to navigate between controls</li>
+                                <li><span class="font-semibold">Space/Enter</span> to activate buttons</li>
+                                <li><span class="font-semibold">Arrow keys</span> for sliders</li>
+                                <li><span class="font-semibold">Left/Right arrows</span> to navigate between sections</li>
+                            </ul>
+                        </div>
+
+                        <div class="mb-6">
+                            <h3 class="font-bold text-xl mb-3 flex items-center">
+                                <i class="fas fa-gamepad text-purple-500 mr-2" aria-hidden="true"></i> How to Use This Guide
+                            </h3>
+                            <ul class="space-y-3">
+                                <li class="flex items-start">
+                                    <span class="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center mr-3 flex-shrink-0">1</span>
+                                    <span>Click the colorful buttons above to jump between sections</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center mr-3 flex-shrink-0">2</span>
+                                    <span>Play with the 3D models by clicking and dragging them</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center mr-3 flex-shrink-0">3</span>
+                                    <span>Use sliders and buttons to see concepts come to life</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center mr-3 flex-shrink-0">4</span>
+                                    <span>Take breaks! Each section works on its own</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <button class="interactive-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center w-full md:w-auto"
+                                onclick="navigateTo('formulation')"
+                                aria-label="Go to Problem Formulation section">
+                            Let's Get Started! <i class="fas fa-arrow-right ml-2" aria-hidden="true"></i>
+                        </button>
+                    </div>
+
+                    <div class="lg:w-1/2">
+                        <div class="canvas-container focus-highlight"
+                             role="img"
+                             aria-label="3D visualization of linear programming constraints">
+                            <div id="intro-canvas"></div>
+                        </div>
+
+                        <!-- Loading state -->
+                        <div id="intro-loading" class="mt-4 text-center text-gray-500">
+                            <i class="fas fa-spinner fa-spin mr-2" aria-hidden="true"></i> Loading visualization...
+                        </div>
+
+                        <div class="mt-4 flex flex-wrap gap-3 justify-center">
+                            <button id="intro-rotate"
+                                    class="interactive-btn bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg flex items-center"
+                                    aria-label="Rotate the 3D visualization">
+                                <i class="fas fa-sync-alt mr-2" aria-hidden="true"></i> Spin View
+                            </button>
+                            <button id="intro-explode"
+                                    class="interactive-btn bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-lg flex items-center"
+                                    aria-label="Explode the 3D visualization">
+                                <i class="fas fa-expand mr-2" aria-hidden="true"></i> Explode
+                            </button>
+                            <button id="intro-reset"
+                                    class="interactive-btn bg-gray-600 hover:bg-gray-700 text-white px-5 py-2 rounded-lg flex items-center"
+                                    aria-label="Reset the 3D visualization">
+                                <i class="fas fa-undo mr-2" aria-hidden="true"></i> Reset
+                            </button>
+                        </div>
+
+                        <div class="mt-6 bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-400">
+                            <h3 class="font-bold text-lg mb-2 flex items-center">
+                                <i class="fas fa-bolt text-yellow-600 mr-2" aria-hidden="true"></i> Quick Tip
+                            </h3>
+                            <p>Watch how the colored planes represent different constraints, and the knot represents the optimal solution we're trying to find!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Problem Formulation Section -->
+        <section id="formulation" class="mb-16 hidden">
+            <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+                <h2 class="text-3xl font-bold mb-6 flex items-center">
+                    <span class="step-indicator bg-green-100 text-green-800">2</span>
+                    <span class="highlight-green">Formulating</span> the Problem
+                </h2>
+
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <div class="lg:w-1/2">
+                        <p class="mb-4 text-lg">Formulating a linear programming problem is like writing a <span class="highlight-purple">recipe</span> for success! We need three key ingredients:</p>
+
+
+
+                        <div class="space-y-6">
+                            <div class="concept-card bg-white p-5 rounded-lg border border-gray-200 hover:border-blue-300">
+                                <h3 class="font-bold text-xl mb-2 flex items-center">
+                                    <i class="fas fa-cube text-red-500 mr-2" aria-hidden="true"></i>
+                                    <span class="highlight-red">Decision Variables</span>
+                                </h3>
+                                <p>These are the things we can change, like how many items to produce.</p>
+                                <div class="equation mt-3 flash">
+                                    x₁ = tables to produce<br>
+                                    x₂ = chairs to produce
+                                </div>
+                            </div>
+
+                            <div class="concept-card bg-white p-5 rounded-lg border border-gray-200 hover:border-blue-300">
+                                <h3 class="font-bold text-xl mb-2 flex items-center">
+                                    <i class="fas fa-bullseye text-blue-500 mr-2" aria-hidden="true"></i>
+                                    <span class="highlight-blue">Objective Function</span>
+                                </h3>
+                                <p>This is what we want to maximize or minimize, like profit.</p>
+                                <div class="equation mt-3 flash">
+                                    Maximize Z = 70x₁ + 50x₂
+                                </div>
+                            </div>
+
+                            <div class="concept-card bg-white p-5 rounded-lg border border-gray-200 hover:border-blue-300">
+                                <h3 class="font-bold text-xl mb-2 flex items-center">
+                                    <i class="fas fa-shield-alt text-green-500 mr-2" aria-hidden="true"></i>
+                                    <span class="highlight-green">Constraints</span>
+                                </h3>
+                                <p>These are the limits we have to work within.</p>
+                                <div class="equation mt-3 flash">
+                                    3x₁ + 2x₂ ≤ 120 (wood hours)<br>
+                                    1x₁ + 2x₂ ≤ 80 (finishing hours)<br>
+                                    x₁ ≥ 0, x₂ ≥ 0
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:w-1/2">
+                        <div class="canvas-container focus-highlight"
+                             role="img"
+                             aria-label="3D visualization of production constraints">
+                            <div id="formulation-canvas"></div>
+                        </div>
+
+                        <!-- Added validation messages -->
+                        <div id="constraint-alert" class="hidden p-4 mb-4 bg-red-50 rounded-lg border-l-4 border-red-500">
+                            <p class="text-red-700 font-medium">Warning: Exceeding available resources!</p>
+                        </div>
+
+                        <div class="mt-4 bg-gray-100 p-4 rounded-lg">
+                            <h3 class="font-bold mb-3 flex items-center">
+                                <i class="fas fa-sliders-h text-purple-500 mr-2" aria-hidden="true"></i> Production Simulator
+                            </h3>
+
+                            <div class="mb-4">
+                                <div class="flex justify-between mb-1">
+                                    <span class="font-medium">Tables: <span id="tables-value" class="font-bold">0</span></span>
+                                    <span class="text-sm text-gray-600">Max: 40</span>
+                                </div>
+                                <input type="range" id="tables-slider" min="0" max="40" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                       aria-label="Tables slider" aria-valuemin="0" aria-valuemax="40" aria-valuenow="0">
+                            </div>
+
+                            <div class="mb-4">
+                                <div class="flex justify-between mb-1">
+                                    <span class="font-medium">Chairs: <span id="chairs-value" class="font-bold">0</span></span>
+                                    <span class="text-sm text-gray-600">Max: 40</span>
+                                </div>
+                                <input type="range" id="chairs-slider" min="0" max="40" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                       aria-label="Chairs slider" aria-valuemin="0" aria-valuemax="40" aria-valuenow="0">
+                            </div>
+
+                            <div class="space-y-3">
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="font-medium">Woodworking Hours</span>
+                                        <span class="text-sm font-medium"><span id="wood-hours">0</span>/120</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div id="wood-progress" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="font-medium">Finishing Hours</span>
+                                        <span class="text-sm font-medium"><span id="finish-hours">0</span>/80</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div id="finish-progress" class="bg-green-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 p-3 bg-blue-50 rounded-lg text-center">
+                                    <p class="text-sm text-gray-600">Total Profit</p>
+                                    <p class="text-2xl font-bold">$<span id="total-profit">0</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 bg-purple-50 p-4 rounded-lg border-l-4 border-purple-500">
+                            <h3 class="font-bold text-lg mb-2 flex items-center">
+                                <i class="fas fa-question-circle text-purple-600 mr-2" aria-hidden="true"></i> Try This Challenge
+                            </h3>
+                            <p>Adjust the sliders to find the combination that gives the highest profit without exceeding the available hours!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Graphical Solution Section -->
+        <section id="graphical" class="mb-16 hidden">
+            <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+                <h2 class="text-3xl font-bold mb-6 flex items-center">
+                    <span class="step-indicator bg-purple-100 text-purple-800">3</span>
+                    <span class="highlight-purple">Graphical</span> Solution Method
+                </h2>
+
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <div class="lg:w-1/2">
+                        <p class="mb-4 text-lg">For problems with two variables, we can <span class="highlight-blue">draw</span> the solution! Follow these steps:</p>
+
+                        <div class="space-y-6">
+                            <div class="flex items-start">
+                                <div class="step-indicator bg-blue-100 text-blue-800 mr-4">1</div>
+                                <div>
+                                    <h3 class="font-bold text-lg mb-2 flex items-center">
+                                        <i class="fas fa-pencil-ruler text-blue-500 mr-2" aria-hidden="true"></i>
+                                        Plot the Constraints
+                                    </h3>
+                                    <p>Turn each inequality into a line on the graph.</p>
+                                    <div class="equation mt-2">
+                                        2x₁ + x₂ ≤ 10<br>
+                                        x₁ + 3x₂ ≤ 15
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start">
+                                <div class="step-indicator bg-green-100 text-green-800 mr-4">2</div>
+                                <div>
+                                    <h3 class="font-bold text-lg mb-2 flex items-center">
+                                        <i class="fas fa-map-marked-alt text-green-500 mr-2" aria-hidden="true"></i>
+                                        Find the Feasible Region
+                                    </h3>
+                                    <p>This is the area where all constraints are satisfied.</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start">
+                                <div class="step-indicator bg-yellow-100 text-yellow-800 mr-4">3</div>
+                                <div>
+                                    <h3 class="font-bold text-lg mb-2 flex items-center">
+                                        <i class="fas fa-bullseye text-yellow-500 mr-2" aria-hidden="true"></i>
+                                        Plot the Objective Function
+                                    </h3>
+                                    <p>Draw lines representing different values of Z.</p>
+                                    <div class="equation mt-2">
+                                        Z = 5x₁ + 3x₂
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start">
+                                <div class="step-indicator bg-red-100 text-red-800 mr-4">4</div>
+                                <div>
+                                    <h3 class="font-bold text-lg mb-2 flex items-center">
+                                        <i class="fas fa-trophy text-red-500 mr-2" aria-hidden="true"></i>
+                                        Find the Optimal Point
+                                    </h3>
+                                    <p>The best solution is always at a corner of the feasible region!</p>
+                                </div>
+                            </div>
+
+                            <div class="attention-grabber bg-purple-50 border-purple-500 mt-6">
+                                <h3 class="font-bold text-lg mb-2 flex items-center">
+                                    <i class="fas fa-lightbulb text-purple-500 mr-2" aria-hidden="true"></i> Key Insight
+                                </h3>
+                                <p>You can imagine the objective function as a line that you "push" outward until it just touches the feasible region!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:w-1/2">
+                        <div class="canvas-container focus-highlight"
+                             role="img"
+                             aria-label="2D visualization of graphical solution method">
+                            <div id="graphical-canvas"></div>
+                        </div>
+
+                        <div class="mt-4">
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <button id="show-constraints"
+                                        class="interactive-btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
+                                        aria-label="Show constraint lines">
+                                    <i class="fas fa-step-forward mr-2" aria-hidden="true"></i> Step 1: Constraints
+                                </button>
+                                <button id="show-feasible"
+                                        class="interactive-btn bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center"
+                                        aria-label="Show feasible region">
+                                    <i class="fas fa-step-forward mr-2" aria-hidden="true"></i> Step 2: Feasible Region
+                                </button>
+                                <button id="show-objective"
+                                        class="interactive-btn bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg flex items-center"
+                                        aria-label="Show objective function">
+                                    <i class="fas fa-step-forward mr-2" aria-hidden="true"></i> Step 3: Objective
+                                </button>
+                                <button id="find-optimal"
+                                        class="interactive-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center"
+                                        aria-label="Find optimal point">
+                                    <i class="fas fa-step-forward mr-2" aria-hidden="true"></i> Step 4: Optimal Point
+                                </button>
+                            </div>
+
+                            <button id="graphical-reset"
+                                    class="interactive-btn bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center w-full"
+                                    aria-label="Reset visualization">
+                                <i class="fas fa-undo mr-2" aria-hidden="true"></i> Reset Visualization
+                            </button>
+
+                            <div id="solution-box" class="hidden mt-6 p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+                                <h3 class="font-bold text-lg mb-2 flex items-center">
+                                    <i class="fas fa-check-circle text-green-500 mr-2" aria-hidden="true"></i> Optimal Solution Found!
+                                </h3>
+                                <div class="grid grid-cols-2 gap-4 mt-2">
+                                    <div>
+                                        <p class="text-sm text-gray-600">x₁ (Tables)</p>
+                                        <p class="text-xl font-bold"><span id="optimal-x1">0</span></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600">x₂ (Chairs)</p>
+                                        <p class="text-xl font-bold"><span id="optimal-x2">0</span></p>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <p class="text-sm text-gray-600">Maximum Profit (Z)</p>
+                                    <p class="text-2xl font-bold"><span id="optimal-z">0</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Standard Form Section -->
+        <section id="standard" class="mb-16 hidden">
+            <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+                <h2 class="text-3xl font-bold mb-6 flex items-center">
+                    <span class="step-indicator bg-indigo-100 text-indigo-800">4</span>
+                    Converting to <span class="highlight-purple">Standard Form</span>
+                </h2>
+
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <div class="lg:w-1/2">
+                        <p class="mb-4 text-lg">Before using the Simplex Method, we need to put our problem in <span class="highlight-blue">standard form</span> with these rules:</p>
+
+                        <div class="space-y-4 mb-6">
+                            <div class="flex items-start">
+                                <div class="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1 flex-shrink-0">
+                                    <i class="fas fa-check" aria-hidden="true"></i>
+                                </div>
+                                <div>
+                                    <p><span class="font-bold">All constraints are equalities</span> (using slack/surplus variables)</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start">
+                                <div class="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1 flex-shrink-0">
+                                    <i class="fas fa-check" aria-hidden="true"></i>
+                                </div>
+                                <div>
+                                    <p><span class="font-bold">All variables are non-negative</span></p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start">
+                                <div class="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1 flex-shrink-0">
+                                    <i class="fas fa-check" aria-hidden="true"></i>
+                                </div>
+                                <div>
+                                    <p><span class="font-bold">Objective function is in maximization form</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="attention-grabber bg-indigo-50 border-indigo-500 mb-6">
+                            <h3 class="font-bold text-lg text-indigo-800 mb-2 flex items-center">
+                                <i class="fas fa-random text-indigo-700 mr-2" aria-hidden="true"></i> Conversion Techniques
+                            </h3>
+                            <p class="text-gray-900">Click the steps to see how we transform the problem!</p>
+                        </div>
+
+                        <div class="space-y-4">
+                            <button id="show-original"
+                                    class="w-full text-left p-4 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-300 flex items-center text-gray-900 font-medium"
+                                    aria-label="Show original problem">
+                                <span class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 font-bold">1</span>
+                                <span>Show Original Problem</span>
+                            </button>
+
+                            <button id="convert-inequalities"
+                                    class="w-full text-left p-4 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-300 flex items-center text-gray-900 font-medium"
+                                    aria-label="Convert inequalities to equalities">
+                                <span class="bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 font-bold">2</span>
+                                <span>Convert Inequalities to Equalities</span>
+                            </button>
+
+                            <button id="convert-unrestricted"
+                                    class="w-full text-left p-4 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-300 flex items-center text-gray-900 font-medium"
+                                    aria-label="Handle unrestricted variables">
+                                <span class="bg-yellow-600 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 font-bold">3</span>
+                                <span>Handle Unrestricted Variables</span>
+                            </button>
+
+                            <button id="convert-objective"
+                                    class="w-full text-left p-4 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-300 flex items-center text-gray-900 font-medium"
+                                    aria-label="Convert to maximization">
+                                <span class="bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 font-bold">4</span>
+                                <span>Convert to Maximization</span>
+                            </button>
+
+                            <button id="final-standard-form"
+                                    class="w-full text-left p-4 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-300 flex items-center text-gray-900 font-medium"
+                                    aria-label="View final standard form">
+                                <span class="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 font-bold">5</span>
+                                <span>Final Standard Form</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="lg:w-1/2">
+                        <div class="canvas-container focus-highlight"
+                             role="img"
+                             aria-label="3D visualization of standard form conversion">
+                            <div id="standard-canvas"></div>
+                        </div>
+
+                        <div class="mt-4 space-y-4">
+                            <div id="original-problem" class="hidden p-4 bg-blue-50 rounded-lg">
+                                <h3 class="font-bold mb-2">Original Problem</h3>
+                                <div class="equation">
+                                    Minimize W = 4x₁ - 2x₂ + 3x₃<br>
+                                    Subject to:<br>
+                                    x₁ + 5x₂ - x₃ ≥ 12<br>
+                                    2x₁ - x₂ + 4x₃ ≤ 18<br>
+                                    x₁ ≥ 0, x₂ unrestricted, x₃ ≥ 0
+                                </div>
+                            </div>
+
+                            <div id="convert-inequalities-result" class="hidden p-4 bg-green-50 rounded-lg">
+                                <h3 class="font-bold mb-2">After Step 2: Inequality Conversion</h3>
+                                <div class="equation">
+                                    Minimize W = 4x₁ - 2x₂ + 3x₃<br>
+                                    Subject to:<br>
+                                    x₁ + 5x₂ - x₃ - <span class="highlight-red">s₁</span> = 12<br>
+                                    2x₁ - x₂ + 4x₃ + <span class="highlight-red">s₂</span> = 18<br>
+                                    x₁ ≥ 0, x₂ unrestricted, x₃ ≥ 0, <span class="highlight-red">s₁, s₂ ≥ 0</span>
+                                </div>
+                            </div>
+
+                            <div id="convert-unrestricted-result" class="hidden p-4 bg-yellow-50 rounded-lg">
+                                <h3 class="font-bold mb-2">After Step 3: Unrestricted Variables</h3>
+                                <div class="equation">
+                                    Minimize W = 4x₁ - 2(<span class="highlight-green">x₂⁺ - x₂⁻</span>) + 3x₃<br>
+                                    Subject to:<br>
+                                    x₁ + 5(<span class="highlight-green">x₂⁺ - x₂⁻</span>) - x₃ - s₁ = 12<br>
+                                    2x₁ - (<span class="highlight-green">x₂⁺ - x₂⁻</span>) + 4x₃ + s₂ = 18<br>
+                                    x₁ ≥ 0, <span class="highlight-green">x₂⁺ ≥ 0, x₂⁻ ≥ 0</span>, x₃ ≥ 0, s₁, s₂ ≥ 0
+                                </div>
+                            </div>
+
+                            <div id="convert-objective-result" class="hidden p-4 bg-red-50 rounded-lg">
+                                <h3 class="font-bold mb-2">After Step 4: Objective Conversion</h3>
+                                <div class="equation">
+                                    <span class="highlight-purple">Maximize -W</span> = -4x₁ + 2(x₂⁺ - x₂⁻) - 3x₃<br>
+                                    Subject to:<br>
+                                    x₁ + 5(x₂⁺ - x₂⁻) - x₃ - s₁ = 12<br>
+                                    2x₁ - (x₂⁺ - x₂⁻) + 4x₃ + s₂ = 18<br>
+                                    x₁ ≥ 0, x₂⁺ ≥ 0, x₂⁻ ≥ 0, x₃ ≥ 0, s₁, s₂ ≥ 0
+                                </div>
+                            </div>
+
+                            <div id="final-standard-form-result" class="hidden p-4 bg-purple-50 rounded-lg">
+                                <h3 class="font-bold mb-2">Final Standard Form</h3>
+                                <div class="equation">
+                                    Maximize Z = -4x₁ + 2x₂⁺ - 2x₂⁻ - 3x₃<br>
+                                    Subject to:<br>
+                                    x₁ + 5x₂⁺ - 5x₂⁻ - x₃ - s₁ = 12<br>
+                                    2x₁ - x₂⁺ + x₂⁻ + 4x₃ + s₂ = 18<br>
+                                    x₁, x₂⁺, x₂⁻, x₃, s₁, s₂ ≥ 0
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Simplex Method Section -->
+        <section id="simplex" class="mb-16 hidden">
+            <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+                <h2 class="text-3xl font-bold mb-6 flex items-center">
+                    <span class="step-indicator bg-red-100 text-red-800">5</span>
+                    The <span class="highlight-red">Simplex Method</span>
+                </h2>
+
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <div class="lg:w-1/2">
+                        <p class="mb-4 text-lg">The Simplex Method is like a <span class="highlight-blue">mountain climber</span> who moves from one peak to another, always going higher until reaching the top!</p>
+
+                        <div class="space-y-6">
+                            <div class="flex items-start">
+                                <div class="step-indicator bg-blue-100 text-blue-800 mr-4">1</div>
+                                <div>
+                                    <h3 class="font-bold text-lg mb-2 flex items-center">
+                                        <i class="fas fa-door-open text-blue-500 mr-2" aria-hidden="true"></i>
+                                        Start at a Corner
+                                    </h3>
+                                    <p>Begin with a basic feasible solution (usually using slack variables).</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start">
+                                <div class="step-indicator bg-green-100 text-green-800 mr-4">2</div>
+                                <div>
+                                    <h3 class="font-bold text-lg mb-2 flex items-center">
+                                        <i class="fas fa-sign-in-alt text-green-500 mr-2" aria-hidden="true"></i>
+                                        Choose an Entering Variable
+                                    </h3>
+                                    <p>Pick a variable that will improve the objective function.</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start">
+                                <div class="step-indicator bg-yellow-100 text-yellow-800 mr-4">3</div>
+                                <div>
+                                    <h3 class="font-bold text-lg mb-2 flex items-center">
+                                        <i class="fas fa-sign-out-alt text-yellow-500 mr-2" aria-hidden="true"></i>
+                                        Choose a Leaving Variable
+                                    </h3>
+                                    <p>Use the minimum ratio test to maintain feasibility.</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start">
+                                <div class="step-indicator bg-purple-100 text-purple-800 mr-4">4</div>
+                                <div>
+                                    <h3 class="font-bold text-lg mb-2 flex items-center">
+                                        <i class="fas fa-sync-alt text-purple-500 mr-2" aria-hidden="true"></i>
+                                        Pivot
+                                    </h3>
+                                    <p>Update the tableau to move to a new basic feasible solution.</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start">
+                                <div class="step-indicator bg-red-100 text-red-800 mr-4">5</div>
+                                <div>
+                                    <h3 class="font-bold text-lg mb-2 flex items-center">
+                                        <i class="fas fa-check-circle text-red-500 mr-2" aria-hidden="true"></i>
+                                        Check for Optimality
+                                    </h3>
+                                    <p>Repeat until no more improvement is possible.</p>
+                                </div>
+                            </div>
+
+                            <div class="attention-grabber bg-red-50 border-red-500 mt-6">
+                                <h3 class="font-bold text-lg mb-2 flex items-center">
+                                    <i class="fas fa-lightbulb text-red-500 mr-2" aria-hidden="true"></i> Key Insight
+                                </h3>
+                                <p>Each pivot moves us to a better corner point of the feasible region!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:w-1/2">
+                        <div class="canvas-container focus-highlight"
+                             role="img"
+                             aria-label="3D visualization of simplex method">
+                            <div id="simplex-canvas"></div>
+                        </div>
+
+                        <div class="mt-4">
+                            <div id="tableau-container" class="mb-4 overflow-x-auto bg-white p-4 rounded-lg shadow-sm">
+                                <h3 class="font-bold mb-3 flex items-center">
+                                    <i class="fas fa-table text-blue-500 mr-2" aria-hidden="true"></i> Simplex Tableau
+                                </h3>
+                                <table class="w-full border-collapse border border-gray-300">
+                                    <thead>
+                                        <tr class="bg-gray-100">
+                                            <th class="border border-gray-300 p-2">Basis</th>
+                                            <th class="border border-gray-300 p-2">x₁</th>
+                                            <th class="border border-gray-300 p-2">x₂</th>
+                                            <th class="border border-gray-300 p-2">s₁</th>
+                                            <th class="border border-gray-300 p-2">s₂</th>
+                                            <th class="border border-gray-300 p-2">RHS</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableau-body">
+                                        <tr>
+                                            <td class="border border-gray-300 p-2">s₁</td>
+                                            <td class="border border-gray-300 p-2">2</td>
+                                            <td class="border border-gray-300 p-2">1</td>
+                                            <td class="border border-gray-300 p-2">1</td>
+                                            <td class="border border-gray-300 p-2">0</td>
+                                            <td class="border border-gray-300 p-2">18</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="border border-gray-300 p-2">s₂</td>
+                                            <td class="border border-gray-300 p-2">1</td>
+                                            <td class="border border-gray-300 p-2">3</td>
+                                            <td class="border border-gray-300 p-2">0</td>
+                                            <td class="border border-gray-300 p-2">1</td>
+                                            <td class="border border-gray-300 p-2">15</td>
+                                        </tr>
+                                        <tr class="bg-gray-100">
+                                            <td class="border border-gray-300 p-2">-Z</td>
+                                            <td class="border border-gray-300 p-2">-3</td>
+                                            <td class="border border-gray-300 p-2">-2</td>
+                                            <td class="border border-gray-300 p-2">0</td>
+                                            <td class="border border-gray-300 p-2">0</td>
+                                            <td class="border border-gray-300 p-2">0</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <button id="find-entering"
+                                        class="interactive-btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
+                                        aria-label="Find entering variable">
+                                    <i class="fas fa-sign-in-alt mr-2" aria-hidden="true"></i> Entering Variable
+                                </button>
+                                <button id="find-leaving"
+                                        class="interactive-btn bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center"
+                                        aria-label="Find leaving variable">
+                                    <i class="fas fa-sign-out-alt mr-2" aria-hidden="true"></i> Leaving Variable
+                                </button>
+                                <button id="perform-pivot"
+                                        class="interactive-btn bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center"
+                                        aria-label="Perform pivot operation">
+                                    <i class="fas fa-sync-alt mr-2" aria-hidden="true"></i> Pivot
+                                </button>
+                                <button id="check-optimality"
+                                        class="interactive-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center"
+                                        aria-label="Check for optimality">
+                                    <i class="fas fa-check-circle mr-2" aria-hidden="true"></i> Check Optimality
+                                </button>
+                            </div>
+
+                            <button id="simplex-reset"
+                                    class="interactive-btn bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center w-full mb-4"
+                                    aria-label="Reset simplex method">
+                                <i class="fas fa-undo mr-2" aria-hidden="true"></i> Reset Simplex
+                            </button>
+
+                            <div id="simplex-status" class="p-4 bg-gray-100 rounded-lg">
+                                <h3 class="font-semibold flex items-center">
+                                    <i class="fas fa-info-circle text-blue-500 mr-2" aria-hidden="true"></i>
+                                    <span id="current-status-text">Initial tableau</span>
+                                </h3>
+                                <p id="simplex-explanation" class="mt-2 text-sm">
+                                    Click the buttons above to step through the simplex algorithm. Watch the 3D visualization to see how we move between corner points!
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Duality Section -->
+        <section id="duality" class="mb-16 hidden">
+            <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+                <h2 class="text-3xl font-bold mb-6 flex items-center">
+                    <span class="step-indicator bg-indigo-100 text-indigo-800">6</span>
+                    The <span class="highlight-purple">Duality</span> Concept
+                </h2>
+
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <div class="lg:w-1/2">
+                        <p class="mb-4 text-lg">Every linear programming problem has a <span class="highlight-blue">shadow twin</span> called its dual problem. They're like two sides of the same coin!</p>
+
+                        <div class="space-y-6">
+                            <div class="concept-card bg-white p-5 rounded-lg border border-gray-200 hover:border-purple-300">
+                                <h3 class="font-bold text-xl mb-2 flex items-center">
+                                    <i class="fas fa-exchange-alt text-indigo-500 mr-2" aria-hidden="true"></i>
+                                    Primal ↔ Dual Relationship
+                                </h3>
+                                <ul class="list-disc pl-5 space-y-1">
+                                    <li>Maximization ↔ Minimization</li>
+                                    <li>Constraints ↔ Variables</li>
+                                    <li>Objective coefficients ↔ RHS values</li>
+                                </ul>
+                            </div>
+
+                            <div class="concept-card bg-white p-5 rounded-lg border border-gray-200 hover:border-purple-300">
+                                <h3 class="font-bold text-xl mb-2 flex items-center">
+                                    <i class="fas fa-balance-scale text-blue-500 mr-2" aria-hidden="true"></i>
+                                    <span class="highlight-blue">Duality Theorems</span>
+                                </h3>
+                                <ul class="list-disc pl-5 space-y-1">
+                                    <li><span class="font-bold">Weak Duality:</span> Dual objective ≤ Primal objective</li>
+                                    <li><span class="font-bold">Strong Duality:</span> At optimality, Dual = Primal</li>
+                                    <li><span class="font-bold">Complementary Slackness:</span> Tells us which constraints are binding</li>
+                                </ul>
+                            </div>
+
+                            <div class="concept-card bg-white p-5 rounded-lg border border-gray-200 hover:border-purple-300">
+                                <h3 class="font-bold text-xl mb-2 flex items-center">
+                                    <i class="fas fa-lightbulb text-yellow-500 mr-2" aria-hidden="true"></i>
+                                    <span class="highlight-yellow">Practical Uses</span>
+                                </h3>
+                                <ul class="list-disc pl-5 space-y-1">
+                                    <li>Finding shadow prices (value of resources)</li>
+                                    <li>Sensitivity analysis (what-if scenarios)</li>
+                                    <li>Alternative solution method</li>
+                                </ul>
+                            </div>
+
+                            <div class="attention-grabber bg-purple-50 border-purple-500 mt-6">
+                                <h3 class="font-bold text-lg mb-2 flex items-center">
+                                    <i class="fas fa-magic text-purple-500 mr-2" aria-hidden="true"></i> Key Insight
+                                </h3>
+                                <p>The dual variables tell us how much the objective function would change if we had one more unit of each resource!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:w-1/2">
+                        <div class="canvas-container focus-highlight"
+                             role="img"
+                             aria-label="3D visualization of duality concept">
+                            <div id="duality-canvas"></div>
+                        </div>
+
+                        <div class="mt-4 space-y-4">
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <h3 class="font-bold mb-2 flex items-center">
+                                    <i class="fas fa-arrow-right text-blue-500 mr-2" aria-hidden="true"></i> Primal Problem
+                                </h3>
+                                <div class="equation">
+                                    Maximize Z = 3x₁ + 2x₂<br>
+                                    Subject to:<br>
+                                    2x₁ + x₂ ≤ 18<br>
+                                    x₁ + 3x₂ ≤ 15<br>
+                                    x₁, x₂ ≥ 0
+                                </div>
+                            </div>
+
+                            <button id="show-dual"
+                                    class="interactive-btn bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-lg flex items-center w-full"
+                                    aria-label="Show dual problem">
+                                <i class="fas fa-exchange-alt mr-2" aria-hidden="true"></i> Convert to Dual Problem
+                            </button>
+
+                            <div id="dual-problem" class="hidden bg-purple-50 p-4 rounded-lg">
+                                <h3 class="font-bold mb-2 flex items-center">
+                                    <i class="fas fa-arrow-left text-purple-500 mr-2" aria-hidden="true"></i> Dual Problem
+                                </h3>
+                                <div class="equation">
+                                    Minimize W = 18y₁ + 15y₂<br>
+                                    Subject to:<br>
+                                    2y₁ + y₂ ≥ 3<br>
+                                    y₁ + 3y₂ ≥ 2<br>
+                                    y₁, y₂ ≥ 0
+                                </div>
+                            </div>
+
+                            <div id="optimal-values" class="hidden bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                                <h3 class="font-bold mb-2 flex items-center">
+                                    <i class="fas fa-check-circle text-green-500 mr-2" aria-hidden="true"></i> Optimal Solutions
+                                </h3>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <h4 class="font-semibold text-blue-700">Primal</h4>
+                                        <p>x₁ = 6, x₂ = 3</p>
+                                        <p>Z = 24</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-purple-700">Dual</h4>
+                                        <p>y₁ = 1.2, y₂ = 0.2</p>
+                                        <p>W = 24</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button id="show-optimal"
+                                    class="interactive-btn bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg flex items-center w-full"
+                                    aria-label="Show optimal solutions">
+                                <i class="fas fa-trophy mr-2" aria-hidden="true"></i> Show Optimal Solutions
+                            </button>
+
+                            <div class="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-400 mt-4">
+                                <h3 class="font-bold text-lg mb-2 flex items-center">
+                                    <i class="fas fa-lightbulb text-yellow-600 mr-2" aria-hidden="true"></i> Interpretation
+                                </h3>
+                                <p>The dual variables (y₁ = 1.2, y₂ = 0.2) tell us that:</p>
+                                <ul class="list-disc pl-5 mt-2">
+                                    <li>One more unit of resource 1 is worth $1.20</li>
+                                    <li>One more unit of resource 2 is worth $0.20</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- JavaScript files -->
+    <script src="js/utils/accessibility.js"></script>
+    <script src="js/utils/storage.js"></script>
+    <script src="js/scenes/base.js"></script>
+    <script src="js/scenes/intro.js"></script>
+    <script src="js/scenes/formulation.js"></script>
+    <script src="js/scenes/graphical.js"></script>
+    <script src="js/scenes/standard.js"></script>
+    <script src="js/scenes/simplex.js"></script>
+    <script src="js/scenes/duality.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
