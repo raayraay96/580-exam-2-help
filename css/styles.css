@@ -200,6 +200,16 @@ button:focus, input:focus {
         background-color: #742a2a !important;
     }
 
+    /* Ensure constraint alert is visible in dark mode */
+    #constraint-alert {
+        background-color: #742a2a !important;
+        border-color: #ef4444 !important;
+    }
+
+    #constraint-alert p {
+        color: #fca5a5 !important;
+    }
+
     .bg-yellow-50 {
         background-color: #744210 !important;
     }

@@ -33,16 +33,16 @@ function initGraphicalScene() {
     scene.add(axesHelper);
 
     // Create constraint lines (initially hidden)
-    createConstraintLines();
+    createConstraintLines(scene);
 
     // Create feasible region (initially hidden)
-    createFeasibleRegion();
+    createFeasibleRegion(scene);
 
     // Create objective function lines (initially hidden)
-    createObjectiveLines();
+    createObjectiveLines(scene);
 
     // Create optimal point (initially hidden)
-    createOptimalPoint();
+    createOptimalPoint(scene);
 
     // Add button event listeners
     document.getElementById('show-constraints').addEventListener('click', () => {
@@ -111,7 +111,7 @@ function initGraphicalScene() {
 }
 
 // Create constraint lines
-function createConstraintLines() {
+function createConstraintLines(scene) {
     // First constraint: 2x₁ + x₂ ≤ 10
     const constraint1Points = [];
     // x₁ = 0 → x₂ = 10
@@ -187,7 +187,7 @@ function createConstraintLines() {
 }
 
 // Create feasible region
-function createFeasibleRegion() {
+function createFeasibleRegion(scene) {
     // Calculate intersection points
     // Origin: (0, 0)
     // Constraint 1 x-intercept: (5, 0)
@@ -219,7 +219,7 @@ function createFeasibleRegion() {
 }
 
 // Create objective function lines
-function createObjectiveLines() {
+function createObjectiveLines(scene) {
     // Objective function: Z = 5x₁ + 3x₂
     // Create multiple parallel lines for different Z values
     const zValues = [0, 10, 20, 30, 40];
