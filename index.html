@@ -1055,33 +1055,69 @@
                 </div>
 
                 <!-- Problem Container -->
-                <div id="practice-problem-container" class="mb-6 p-4 bg-blue-900 rounded-lg border border-blue-700 text-white">
-                    <h3 id="practice-problem-title" class="text-xl font-bold mb-3 text-yellow-300">Problem Title</h3>
-                    <p id="practice-problem-description" class="mb-4 text-white text-lg">Problem description will appear here.</p>
+                <div id="practice-problem-container" class="mb-6 p-4 bg-white rounded-lg border border-gray-300 shadow-md">
+                    <h3 id="practice-problem-title" class="text-xl font-bold mb-3 text-indigo-800">Problem Title</h3>
+
+                    <div class="flex flex-col lg:flex-row gap-6 mb-4">
+                        <!-- Problem Description with Highlighted Text -->
+                        <div class="lg:w-2/3 p-4 bg-indigo-50 rounded-lg border border-indigo-300">
+                            <h4 class="font-bold text-indigo-900 mb-2 flex items-center">
+                                <i class="fas fa-file-alt text-indigo-600 mr-2"></i> Problem Statement
+                            </h4>
+                            <p id="practice-problem-description" class="mb-0 text-base text-black">Problem description will appear here.</p>
+                        </div>
+
+                        <!-- Given/Find Table -->
+                        <div class="lg:w-1/3 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                            <h4 class="font-bold text-indigo-800 mb-2 flex items-center">
+                                <i class="fas fa-search text-indigo-600 mr-2"></i> Problem Analysis
+                            </h4>
+                            <table class="w-full border-collapse">
+                                <thead>
+                                    <tr>
+                                        <th class="p-2 bg-indigo-100 border border-indigo-300 text-left rounded-tl-lg">Given</th>
+                                        <th class="p-2 bg-indigo-100 border border-indigo-300 text-left rounded-tr-lg">Find</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td id="practice-given" class="p-2 border border-indigo-200 align-top"></td>
+                                        <td id="practice-find" class="p-2 border border-indigo-200 align-top"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <!-- Variables -->
-                        <div class="p-3 bg-blue-800 rounded-lg border border-blue-600">
-                            <h4 class="font-bold text-yellow-300 mb-2">Variables</h4>
-                            <div id="practice-variables-content" class="font-mono text-white text-base"></div>
+                        <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <h4 class="font-bold text-blue-800 mb-2 flex items-center">
+                                <i class="fas fa-cube text-blue-600 mr-2"></i> Variables
+                            </h4>
+                            <div id="practice-variables-content" class="font-mono"></div>
                         </div>
 
                         <!-- Objective Function -->
-                        <div class="p-3 bg-green-800 rounded-lg border border-green-600">
-                            <h4 class="font-bold text-yellow-300 mb-2">Objective Function</h4>
-                            <div id="practice-objective-content" class="font-mono text-white text-base"></div>
+                        <div class="p-3 bg-green-50 rounded-lg border border-green-200">
+                            <h4 class="font-bold text-green-800 mb-2 flex items-center">
+                                <i class="fas fa-bullseye text-green-600 mr-2"></i> Objective Function
+                            </h4>
+                            <div id="practice-objective-content" class="font-mono"></div>
                         </div>
 
                         <!-- Constraints -->
-                        <div class="p-3 bg-yellow-800 rounded-lg border border-yellow-600">
-                            <h4 class="font-bold text-yellow-300 mb-2">Constraints</h4>
-                            <div id="practice-constraints-content" class="font-mono text-white text-base"></div>
+                        <div class="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                            <h4 class="font-bold text-yellow-800 mb-2 flex items-center">
+                                <i class="fas fa-ban text-yellow-600 mr-2"></i> Constraints
+                            </h4>
+                            <div id="practice-constraints-content" class="font-mono"></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Try It Yourself Section -->
-                <div class="mb-6 p-4 bg-indigo-50 rounded-lg border-l-4 border-indigo-500">
+                <div class="mb-6 p-4 bg-indigo-100 rounded-lg border-l-4 border-indigo-500">
                     <h3 class="text-xl font-bold mb-3 flex items-center">
                         <i class="fas fa-pencil-alt text-indigo-600 mr-2"></i> Try It Yourself
                     </h3>
@@ -1102,9 +1138,14 @@
                         </div>
                     </div>
 
-                    <button id="practice-check-answer" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-300">
-                        <i class="fas fa-check mr-2"></i> Check Answer
-                    </button>
+                    <div class="flex gap-2">
+                        <button id="practice-check-answer" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-300">
+                            <i class="fas fa-check mr-2"></i> Check Answer
+                        </button>
+                        <button id="practice-show-solution" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300">
+                            <i class="fas fa-lightbulb mr-2"></i> Show Step-by-Step Solution
+                        </button>
+                    </div>
 
                     <div id="practice-answer-feedback" class="mt-4 p-3 rounded-lg border-l-4 hidden"></div>
                 </div>

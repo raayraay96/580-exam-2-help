@@ -1,4 +1,17 @@
 /* Component styles */
+
+/* Ensure high contrast for all text */
+body {
+    color: #000000;
+}
+
+.text-gray-500, .text-gray-600, .text-gray-700 {
+    color: #374151 !important; /* Darker gray for better contrast */
+}
+
+.bg-gray-50 {
+    background-color: #f0f4ff !important; /* Slightly blue tinted for better contrast */
+}
 .focus-highlight {
     transition: all 0.3s ease;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);

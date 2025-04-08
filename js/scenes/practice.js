@@ -169,6 +169,7 @@ function initPracticeSection() {
     document.getElementById('practice-show-step').addEventListener('click', showNextStep);
     document.getElementById('practice-reset').addEventListener('click', resetPractice);
     document.getElementById('practice-check-answer').addEventListener('click', checkAnswer);
+    document.getElementById('practice-show-solution').addEventListener('click', showSolution);
 
     // Load the first problem by default
     loadProblem(0);
@@ -183,9 +184,57 @@ function loadProblem(problemIndex) {
     practiceState.currentProblem = problemIndex;
     const problem = practiceState.problems[problemIndex];
 
-    // Update the problem description
+    // Update the problem title
     document.getElementById('practice-problem-title').textContent = problem.title;
-    document.getElementById('practice-problem-description').textContent = problem.description;
+
+    // Update the problem description with highlighted important information
+    const descriptionElement = document.getElementById('practice-problem-description');
+
+    // Create a highlighted version of the description
+    let highlightedDescription = problem.description;
+
+    // Highlight numbers and key phrases
+    highlightedDescription = highlightedDescription
+        // Highlight numbers
+        .replace(/(\d+)\s+(hour|unit|\$)/g, '<span class="font-bold text-indigo-700">$1</span> $2')
+        // Highlight dollar amounts
+        .replace(/(\$\d+)/g, '<span class="font-bold text-green-700">$1</span>')
+        // Highlight products/items
+        .replace(/(product\s+[A-Z]|[Pp]roduct\s+\d+|[Ff]ood\s+\d+|[Ii]nvestment\s+[A-Z])/g, '<span class="font-bold text-blue-700">$1</span>')
+        // Highlight key action words
+        .replace(/([Mm]aximize|[Mm]inimize|[Mm]anufacture|[Aa]vailable|[Rr]equires)/g, '<span class="font-bold text-purple-700">$1</span>');
+
+    descriptionElement.innerHTML = highlightedDescription;
+
+    // Populate the Given/Find table
+    const givenElement = document.getElementById('practice-given');
+    const findElement = document.getElementById('practice-find');
+
+    // Create the Given content based on problem type
+    let givenContent = '<ul class="list-disc pl-5 space-y-1">';
+
+    // Add resource constraints
+    problem.constraints.forEach(constraint => {
+        givenContent += `<li>${constraint.label}: ${constraint.rhs} units</li>`;
+    });
+
+    // Add profit/cost per unit
+    if (problem.objective.type === 'maximize') {
+        givenContent += `<li>Profit: ${problem.objective.coefficients[0]} per unit of ${problem.variables.x1.name}, ${problem.objective.coefficients[1]} per unit of ${problem.variables.x2.name}</li>`;
+    } else {
+        givenContent += `<li>Cost: ${problem.objective.coefficients[0]} per unit of ${problem.variables.x1.name}, ${problem.objective.coefficients[1]} per unit of ${problem.variables.x2.name}</li>`;
+    }
+
+    givenContent += '</ul>';
+    givenElement.innerHTML = givenContent;
+
+    // Create the Find content
+    let findContent = '<ul class="list-disc pl-5 space-y-1">';
+    findContent += `<li>How many units of ${problem.variables.x1.name} (x₁)?</li>`;
+    findContent += `<li>How many units of ${problem.variables.x2.name} (x₂)?</li>`;
+    findContent += `<li>${problem.objective.type === 'maximize' ? 'Maximum' : 'Minimum'} value of Z?</li>`;
+    findContent += '</ul>';
+    findElement.innerHTML = findContent;
 
     // Update the variables section
     const variablesContent = document.getElementById('practice-variables-content');
@@ -722,7 +771,7 @@ function checkAnswer() {
 
         showAnswerFeedback(false, feedback);
 
-        // Automatically show the solution container to help the student
+        // Always show the solution container to help the student
         document.getElementById('practice-solution-container').classList.remove('hidden');
     }
 }
@@ -744,6 +793,21 @@ function showAnswerFeedback(isCorrect, message) {
 
     // Scroll to the feedback element
     feedbackElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// Show the solution directly
+function showSolution() {
+    // Show the solution container
+    document.getElementById('practice-solution-container').classList.remove('hidden');
+
+    // Scroll to the solution container
+    document.getElementById('practice-solution-container').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    // If there are no steps shown yet, show the first step
+    const stepsContainer = document.getElementById('practice-steps-container');
+    if (stepsContainer.children.length === 0) {
+        showNextStep();
+    }
 }
 
 // Export the initialization function
