@@ -15,6 +15,10 @@ function initStandardScene() {
     camera.position.set(7, 7, 7);
     camera.lookAt(0, 0, 0);
 
+    // Make sure the renderer is properly sized
+    const container = document.getElementById('standard-canvas');
+    renderer.setSize(container.clientWidth, container.clientHeight);
+
     // Implement the Standard Form visualization
 
     // Create a 3D representation of the problem transformation

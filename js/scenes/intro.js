@@ -15,6 +15,10 @@ function initIntroScene() {
     camera.position.set(7, 7, 7);
     camera.lookAt(0, 0, 0);
 
+    // Make sure the renderer is properly sized
+    const container = document.getElementById('intro-canvas');
+    renderer.setSize(container.clientWidth, container.clientHeight);
+
     // Create constraint planes
     const planeSize = 10;
 

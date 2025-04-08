@@ -15,6 +15,10 @@ function initDualityScene() {
     camera.position.set(7, 7, 7);
     camera.lookAt(0, 0, 0);
 
+    // Make sure the renderer is properly sized
+    const container = document.getElementById('duality-canvas');
+    renderer.setSize(container.clientWidth, container.clientHeight);
+
     // Implement the Duality visualization
 
     // Create primal problem representation

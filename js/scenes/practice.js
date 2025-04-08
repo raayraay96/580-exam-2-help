@@ -259,40 +259,294 @@ function showNextStep() {
         stepHeader.innerHTML = `<span class="bg-${stepColor}-100 text-${stepColor}-800 rounded-full w-7 h-7 flex items-center justify-center mr-2 font-bold">${currentStepCount + 1}</span> ${step.title}`;
         stepElement.appendChild(stepHeader);
 
-        // Add step content with better formatting
-        const stepContent = document.createElement('div');
-        stepContent.className = 'whitespace-pre-wrap font-mono text-base bg-white p-3 rounded-lg border border-gray-200';
-        stepContent.textContent = step.content;
-        stepElement.appendChild(stepContent);
+        // Add initial step prompt (not the full solution yet)
+        const stepPrompt = document.createElement('div');
+        stepPrompt.className = 'mb-4 font-medium';
 
-        // Add a "Try it yourself" prompt if appropriate
-        if (currentStepCount < 4) { // Don't add for the final steps
-            const tryItSection = document.createElement('div');
-            tryItSection.className = 'mt-3 p-3 bg-indigo-50 rounded-lg';
+        // Create different prompts based on the step
+        let promptText = '';
+        let choices = [];
 
-            let tryItPrompt = '';
-            switch(currentStepCount) {
-                case 0: // Variables
-                    tryItPrompt = 'Try defining the variables for this problem on your own before proceeding.';
-                    break;
-                case 1: // Objective
-                    tryItPrompt = 'Try writing the objective function for this problem on your own before proceeding.';
-                    break;
-                case 2: // Constraints
-                    tryItPrompt = 'Try identifying all the constraints for this problem on your own before proceeding.';
-                    break;
-                case 3: // Corner points
-                    tryItPrompt = 'Try finding the corner points by solving the constraint equations on your own before proceeding.';
-                    break;
+        switch(currentStepCount) {
+            case 0: // Define Variables
+                promptText = 'Step 1: Define the decision variables for this problem.';
+                choices = [
+                    {
+                        text: `Let x₁ = ${problem.variables.x1.name} and x₂ = ${problem.variables.x2.name}`,
+                        correct: true,
+                        explanation: 'Correct! These are the quantities we need to determine. On an exam, you would write this definition at the beginning of your solution.'
+                    },
+                    {
+                        text: `Let x₁ = profit from ${problem.variables.x1.name} and x₂ = profit from ${problem.variables.x2.name}`,
+                        correct: false,
+                        explanation: 'Not quite. The decision variables should represent the quantities we can control, not the profit. This is a common mistake on exams.'
+                    }
+                ];
+                break;
+
+            case 1: // Set Objective Function
+                promptText = 'Step 2: Formulate the objective function based on the problem description.';
+
+                // Get coefficients for clearer explanation
+                const coef1 = problem.objective.coefficients[0];
+                const coef2 = problem.objective.coefficients[1];
+
+                choices = [
+                    {
+                        text: `${problem.objective.type === 'maximize' ? 'Maximize' : 'Minimize'} Z = ${problem.objective.function}`,
+                        correct: true,
+                        explanation: `Correct! We ${problem.objective.type} Z = ${coef1}x₁ + ${coef2}x₂ because each unit of ${problem.variables.x1.name} contributes $${coef1} and each unit of ${problem.variables.x2.name} contributes $${coef2} to the ${problem.objective.type === 'maximize' ? 'profit' : 'cost'}.`
+                    },
+                    {
+                        text: `${problem.objective.type === 'maximize' ? 'Minimize' : 'Maximize'} Z = ${problem.objective.function}`,
+                        correct: false,
+                        explanation: `Not quite. We need to ${problem.objective.type} (not ${problem.objective.type === 'maximize' ? 'minimize' : 'maximize'}) the objective function based on the problem description.`
+                    }
+                ];
+                break;
+
+            case 2: // Identify Constraints
+                promptText = 'Step 3: Identify the constraints that limit our decision variables.';
+
+                // Get constraint details for better explanation
+                const constraint = problem.constraints[0];
+                const parts = constraint.expression.split(' ');
+                const lhs = parts[0]; // Left-hand side of constraint
+                const inequality = parts[1]; // Inequality symbol
+                const rhs = parts[2]; // Right-hand side value
+
+                choices = [
+                    {
+                        text: `${constraint.expression} (${constraint.label})`,
+                        correct: true,
+                        explanation: `Correct! This constraint represents the ${constraint.label} limitation. The left side (${lhs}) represents the total ${constraint.label.toLowerCase()} used/required, which must be ${inequality === '≤' ? 'less than or equal to' : 'greater than or equal to'} ${rhs}.`
+                    },
+                    {
+                        text: `${lhs} ${inequality === '≤' ? '≥' : '≤'} ${rhs} (${constraint.label})`,
+                        correct: false,
+                        explanation: `Not quite. The inequality direction is incorrect. For this ${constraint.label.toLowerCase()} constraint, we need ${lhs} ${inequality} ${rhs}.`
+                    }
+                ];
+                break;
+
+            case 3: // Find Corner Points
+                promptText = 'Step 4: Find the corner points by solving the systems of equations.';
+
+                // Create a more detailed explanation with the math steps
+                let cornerPointsExplanation = '';
+                if (problem.constraints.length >= 2) {
+                    const c1 = problem.constraints[0];
+                    const c2 = problem.constraints[1];
+
+                    // Extract coefficients for clearer math
+                    const c1Parts = c1.expression.split(' ');
+                    const c2Parts = c2.expression.split(' ');
+
+                    // Convert inequality to equality for corner point calculation
+                    const c1Eq = c1Parts[0] + ' = ' + c1Parts[2];
+                    const c2Eq = c2Parts[0] + ' = ' + c2Parts[2];
+
+                    cornerPointsExplanation = `To find this corner point, we solve the system of equations:\n${c1Eq}\n${c2Eq}\n\nThis gives us the point (${problem.solution.x1}, ${problem.solution.x2}).`;
+                }
+
+                // Create a fake corner point with explanation
+                const fakePoint = {
+                    x1: problem.solution.x1 > 5 ? 0 : problem.solution.x1 + 5,
+                    x2: problem.solution.x2 > 5 ? 0 : problem.solution.x2 + 5
+                };
+
+                choices = [
+                    {
+                        text: `Corner point at (${problem.solution.x1}, ${problem.solution.x2})`,
+                        correct: true,
+                        explanation: `Correct! ${cornerPointsExplanation}`
+                    },
+                    {
+                        text: `Corner point at (${fakePoint.x1}, ${fakePoint.x2})`,
+                        correct: false,
+                        explanation: `Not quite. This point either doesn't satisfy all constraints or isn't at the intersection of two constraint boundaries. You need to solve the system of equations correctly.`
+                    }
+                ];
+                break;
+
+            case 4: // Evaluate Objective Function
+                promptText = `Step 5: Evaluate the objective function at the corner point (${problem.solution.x1}, ${problem.solution.x2}).`;
+
+                // Get coefficients for showing the calculation
+                const objCoef1 = problem.objective.coefficients[0];
+                const objCoef2 = problem.objective.coefficients[1];
+
+                // Calculate the components for a clearer explanation
+                const component1 = objCoef1 * problem.solution.x1;
+                const component2 = objCoef2 * problem.solution.x2;
+
+                choices = [
+                    {
+                        text: `Z = ${objCoef1}(${problem.solution.x1}) + ${objCoef2}(${problem.solution.x2}) = ${component1} + ${component2} = ${problem.solution.value}`,
+                        correct: true,
+                        explanation: `Correct! We substitute the values into the objective function:\nZ = ${objCoef1}x₁ + ${objCoef2}x₂\nZ = ${objCoef1}(${problem.solution.x1}) + ${objCoef2}(${problem.solution.x2})\nZ = ${component1} + ${component2}\nZ = ${problem.solution.value}`
+                    },
+                    {
+                        text: `Z = ${objCoef1}(${problem.solution.x1}) + ${objCoef2}(${problem.solution.x2}) = ${component1 - 10} + ${component2 + 5} = ${problem.solution.value - 5}`,
+                        correct: false,
+                        explanation: `Not quite. Let's calculate this step-by-step:\nZ = ${objCoef1}x₁ + ${objCoef2}x₂\nZ = ${objCoef1}(${problem.solution.x1}) + ${objCoef2}(${problem.solution.x2})\nZ = ${component1} + ${component2}\nZ = ${problem.solution.value}`
+                    }
+                ];
+                break;
+
+            case 5: // Determine Optimal Solution
+                promptText = 'Step 6: Identify the binding constraints and state the final answer.';
+
+                // Create detailed explanation with binding constraints
+                let bindingExplanation = '';
+                if (problem.solution.bindingConstraints && problem.solution.bindingConstraints.length > 0) {
+                    bindingExplanation = `The binding constraints at the optimal solution (${problem.solution.x1}, ${problem.solution.x2}) are:\n${problem.solution.bindingConstraints.join('\n')}\n\nThese constraints are binding because the solution point lies exactly on these constraint boundaries.`;
+
+                    choices = [
+                        {
+                            text: `The optimal solution is at (${problem.solution.x1}, ${problem.solution.x2}) with ${problem.objective.type === 'maximize' ? 'maximum' : 'minimum'} value Z = ${problem.solution.value}. The binding constraints are ${problem.solution.bindingConstraints.join(' and ')}.`,
+                            correct: true,
+                            explanation: `Correct! ${bindingExplanation}\n\nOn an exam, you would write this as your final answer, clearly stating the values of the decision variables and the optimal objective value.`
+                        },
+                        {
+                            text: `The optimal solution is at (${problem.solution.x1}, ${problem.solution.x2}) with ${problem.objective.type === 'maximize' ? 'maximum' : 'minimum'} value Z = ${problem.solution.value}. No constraints are binding.`,
+                            correct: false,
+                            explanation: `Not quite. At the optimal solution in a linear programming problem, at least one constraint must be binding (active).\n\n${bindingExplanation}`
+                        }
+                    ];
+                } else {
+                    choices = [
+                        {
+                            text: `The optimal solution is at (${problem.solution.x1}, ${problem.solution.x2}) with ${problem.objective.type === 'maximize' ? 'maximum' : 'minimum'} value Z = ${problem.solution.value}.`,
+                            correct: true,
+                            explanation: `Correct! This is the optimal solution. On an exam, you would clearly state the values of the decision variables and the optimal objective value.`
+                        },
+                        {
+                            text: `The optimal solution is at (${problem.solution.x1/2}, ${problem.solution.x2*2}) with ${problem.objective.type === 'maximize' ? 'maximum' : 'minimum'} value Z = ${problem.solution.value - 50}.`,
+                            correct: false,
+                            explanation: `Not quite. The correct optimal solution is at (${problem.solution.x1}, ${problem.solution.x2}) with ${problem.objective.type === 'maximize' ? 'maximum' : 'minimum'} value Z = ${problem.solution.value}.`
+                        }
+                    ];
+                }
+                break;
+
+            default:
+                promptText = 'Consider the following:';
+        }
+
+        stepPrompt.textContent = promptText;
+        stepElement.appendChild(stepPrompt);
+
+        // Add choices
+        if (choices.length > 0) {
+            const choicesContainer = document.createElement('div');
+            choicesContainer.className = 'space-y-3 mb-4';
+
+            choices.forEach((choice, index) => {
+                const choiceButton = document.createElement('button');
+                choiceButton.className = 'w-full p-3 text-left border rounded-lg hover:bg-gray-50 transition-colors';
+                choiceButton.textContent = choice.text;
+
+                // Add click event to handle choice selection
+                choiceButton.addEventListener('click', () => {
+                    // Disable all choice buttons
+                    choicesContainer.querySelectorAll('button').forEach(btn => {
+                        btn.disabled = true;
+                        btn.classList.add('opacity-50');
+                    });
+
+                    // Highlight the selected choice
+                    if (choice.correct) {
+                        choiceButton.classList.remove('border');
+                        choiceButton.classList.add('border-2', 'border-green-500', 'bg-green-50');
+                    } else {
+                        choiceButton.classList.remove('border');
+                        choiceButton.classList.add('border-2', 'border-red-500', 'bg-red-50');
+                    }
+
+                    // Show feedback
+                    const feedbackElement = document.createElement('div');
+                    feedbackElement.className = choice.correct ?
+                        'mt-3 p-3 bg-green-50 rounded-lg border-l-4 border-green-500' :
+                        'mt-3 p-3 bg-red-50 rounded-lg border-l-4 border-red-500';
+
+                    feedbackElement.innerHTML = `<div class="flex items-start">
+                        <i class="${choice.correct ? 'fas fa-check-circle text-green-500' : 'fas fa-times-circle text-red-500'} mr-2 mt-1"></i>
+                        <div>${choice.explanation}</div>
+                    </div>`;
+
+                    choicesContainer.appendChild(feedbackElement);
+
+                    // Show the full step content after a short delay
+                    setTimeout(() => {
+                        // Add step content
+                        const stepContent = document.createElement('div');
+                        stepContent.className = 'whitespace-pre-wrap font-mono text-base mt-4 p-3 bg-white rounded-lg border border-gray-200';
+                        stepContent.textContent = step.content;
+
+                        const contentHeader = document.createElement('h5');
+                        contentHeader.className = 'font-bold mb-2';
+                        contentHeader.textContent = 'Complete Solution:';
+
+                        const contentWrapper = document.createElement('div');
+                        contentWrapper.className = 'mt-4';
+                        contentWrapper.appendChild(contentHeader);
+                        contentWrapper.appendChild(stepContent);
+
+                        stepElement.appendChild(contentWrapper);
+
+                        // Add a "Try it yourself" prompt after showing the solution
+                        if (currentStepCount < 4) { // Don't add for the final steps
+                            const tryItSection = document.createElement('div');
+                            tryItSection.className = 'mt-3 p-3 bg-indigo-50 rounded-lg';
+
+                            let tryItPrompt = '';
+                            switch(currentStepCount) {
+                                case 0: // Variables
+                                    tryItPrompt = 'Now try applying this to a similar problem. For example, if this were a transportation problem, what would your variables represent?';
+                                    break;
+                                case 1: // Objective
+                                    tryItPrompt = 'Practice writing the objective function for a different scenario. What if the coefficients were different?';
+                                    break;
+                                case 2: // Constraints
+                                    tryItPrompt = 'Try identifying constraints for a similar problem. What if there were additional resource limitations?';
+                                    break;
+                                case 3: // Corner points
+                                    tryItPrompt = 'Practice finding corner points for other constraint combinations. What if one constraint were changed?';
+                                    break;
+                            }
+
+                            tryItSection.innerHTML = `<div class="flex items-center mb-2">
+                                <i class="fas fa-pencil-alt text-indigo-600 mr-2"></i>
+                                <span class="font-bold text-indigo-800">Try it yourself:</span>
+                            </div>
+                            <p>${tryItPrompt}</p>`;
+
+                            stepElement.appendChild(tryItSection);
+                        }
+
+                        // If this was the last step, show the final answer
+                        if (currentStepCount === problem.steps.length - 1) {
+                            showFinalAnswer();
+                        }
+                    }, 1000);
+                });
+
+                choicesContainer.appendChild(choiceButton);
+            });
+
+            stepElement.appendChild(choicesContainer);
+        } else {
+            // If no choices, just show the content
+            const stepContent = document.createElement('div');
+            stepContent.className = 'whitespace-pre-wrap font-mono text-base bg-white p-3 rounded-lg border border-gray-200';
+            stepContent.textContent = step.content;
+            stepElement.appendChild(stepContent);
+
+            // If this was the last step, show the final answer
+            if (currentStepCount === problem.steps.length - 1) {
+                showFinalAnswer();
             }
-
-            tryItSection.innerHTML = `<div class="flex items-center mb-2">
-                <i class="fas fa-pencil-alt text-indigo-600 mr-2"></i>
-                <span class="font-bold text-indigo-800">Try it yourself:</span>
-            </div>
-            <p>${tryItPrompt}</p>`;
-
-            stepElement.appendChild(tryItSection);
         }
 
         // Add the step to the container
@@ -303,11 +557,6 @@ function showNextStep() {
 
         // Show the solution container if it was hidden
         document.getElementById('practice-solution-container').classList.remove('hidden');
-
-        // If this was the last step, show the final answer
-        if (currentStepCount === problem.steps.length - 1) {
-            showFinalAnswer();
-        }
     }
 }
 
